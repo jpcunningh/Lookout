@@ -35,7 +35,7 @@ const MIN_LSR_PAIRS = 2;
 const MAX_LSR_PAIRS = 10;
 const MAX_LSR_PAIRS_AGE = 6; // days
 
-const leftPadString = (str, len) => ' '.repeat(len - str.toString().length) + str;
+const leftPadString = (str, len) => ' '.repeat(Math.max(0, len - str.toString().length)) + str;
 
 const calcGlucose = (sgv, calibration) => {
   let glucose = Math.round((sgv.unfiltered - calibration.intercept) / calibration.slope);
