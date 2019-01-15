@@ -148,17 +148,19 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
     }
   };
 
-  const stopSensorSession = async () => {
+  const stopSensorSession = async (stopTime) => {
     const now = moment();
+    let stopWhen = stopTime || now;
 
-    await storage.setItem('sensorStop', now.valueOf())
+    // if the commanded stop time is older than 2 hours, use current time
+    if (stopTime.diff(now, 'minutes') > 120) {
+      stopWhen = now;
+    }
+
+    await storage.setItem('sensorStop', stopWhen.valueOf())
       .catch((err) => {
         error(`Unable to store sensorStop: ${err}`);
       });
-
-    if (options.nightscout) {
-      xDripAPS.postEvent('Sensor Stop', now);
-    }
 
     await storage.del('glucoseHist');
     await calibration.clearCalibration(storage);
@@ -213,7 +215,7 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
       }
       debug(`Session Start: ${sessionStart} sensorStart: ${sensorInsert} sensorStop: ${sensorStop}`);
       stopTransmitterSession();
-      await stopSensorSession();
+      await stopSensorSession(sensorStop);
     } else {
       const haveCal = await calibration.haveCalibration(storage);
 
@@ -234,7 +236,7 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
           + '\nSee calibration log messages above for details'
           + '\n====================================',
         );
-        await stopSensorSession();
+        await stopSensorSession(sensorStop);
       }
     }
   };
