@@ -107,15 +107,19 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
   // Return true if there is no SGV or the most recent SGV was received from transmitter
   // Also return true if the latest SGV we have is more than 15 minutes old
   // Return false if most recent SGV was received from NS
-  const isControlling = async () => {
-    const sgv = await getGlucose();
+  const isControlling = async (sgv) => {
+    let latestSgv = sgv;
+
+    if (!latestSgv) {
+      latestSgv = await getGlucose();
+    }
 
     // inSession is only in the SGV record if it came from transmitter
-    if (!sgv || (typeof sgv.inSession !== 'undefined')) {
+    if (!latestSgv || (typeof latestSgv.inSession !== 'undefined')) {
       return true;
     }
 
-    if ((moment().valueOf() - sgv.readDateMills) > 15 * 60000) {
+    if ((moment().valueOf() - latestSgv.readDateMills) > 15 * 60000) {
       return true;
     }
 
@@ -148,17 +152,19 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
     }
   };
 
-  const stopSensorSession = async () => {
+  const stopSensorSession = async (stopTime) => {
     const now = moment();
+    let stopWhen = stopTime || now;
 
-    await storage.setItem('sensorStop', now.valueOf())
+    // if the commanded stop time is older than 2 hours, use current time
+    if (stopTime.diff(now, 'minutes') > 120) {
+      stopWhen = now;
+    }
+
+    await storage.setItem('sensorStop', stopWhen.valueOf())
       .catch((err) => {
         error(`Unable to store sensorStop: ${err}`);
       });
-
-    if (options.nightscout) {
-      xDripAPS.postEvent('Sensor Stop', now);
-    }
 
     await storage.del('glucoseHist');
     await calibration.clearCalibration(storage);
@@ -213,8 +219,8 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
       }
       debug(`Session Start: ${sessionStart} sensorStart: ${sensorInsert} sensorStop: ${sensorStop}`);
       stopTransmitterSession();
-      await stopSensorSession();
-    } else {
+      await stopSensorSession(sensorStop);
+    } else if (isControlling(sgv)) {
       const haveCal = await calibration.haveCalibration(storage);
 
       let latestBgCheckTime = null;
@@ -234,7 +240,7 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
           + '\nSee calibration log messages above for details'
           + '\n====================================',
         );
-        await stopSensorSession();
+        await stopSensorSession(sensorStop);
       }
     }
   };
@@ -522,7 +528,7 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
     }
   };
 
-  const processNewGlucose = async (newSgv) => {
+  const processNewGlucose = async (newSgv, startingSession) => {
     let glucoseHist = null;
     let sendSGV = true;
 
@@ -636,7 +642,10 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
       sgv.mode = 'txmitter cal';
     }
 
-    if (sgv.state === 0x1 && (sgv.inExtendedSession || sgv.inExpiredSession)) {
+    // Only override the state if expired calibration enabled
+    // Otherwise, the session would be immediately stopped if a BG Check is entered
+    if (sgv.state === 0x1 && options.expired_cal
+      && (sgv.inExtendedSession || sgv.inExpiredSession)) {
       if (moment().diff(sensorStart, 'days') <= 4 && bgChecks.length > 0 && moment().diff(moment(bgChecks[bgChecks.length - 1].dateMills), 'hours') > 12) {
         // set session state to Need Calibration - cal every 12 hours for first 4 days
         sgv.state = 0x7;
@@ -662,6 +671,16 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
 
       if ((!prevSgv || (sgv.state !== prevSgv.state)) && options.nightscout) {
         xDripAPS.postAnnouncement(`Sensor: ${sgv.stateString}`);
+      } else if (startingSession && sgv.state !== 0x02) {
+        xDripAPS.postAnnouncement(`Unable to Start Session: ${sgv.stateString} should have been 'Warmup'`);
+        log('============================================='
+          + '\nLookout sent start session command to transmitter; however,'
+          + '\ntransmitter did not start the session. Possible causes:'
+          + '\n  * Attempting to back start session at a time prior to the transmitter start time'
+          + '\n  * Attempting to back start session at a time prior to the prior session stop time'
+          + '\n  * Attempting to back start session (sometimes it just does not work)'
+          + '\n  * Previous session not stopped'
+          + '\n=============================================');
       }
     }
 
@@ -929,6 +948,8 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
       return;
     }
 
+    let startingSession = false;
+
     // Remove the BT device so it starts from scratch
     removeBTDevice(id);
 
@@ -988,6 +1009,12 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
           log('Not requesting backfill - no glucose history');
         }
 
+        _.each(pending, (msg) => {
+          if (msg.type === 'StartSensor') {
+            startingSession = true;
+          }
+        });
+
         worker.send(pending);
         // NOTE: this will lead to missed messages if the rig
         // shuts down before acting on them, or in the
@@ -1021,7 +1048,7 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
           + '\n====================================',
         );
 
-        processNewGlucose(glucose);
+        processNewGlucose(glucose, startingSession);
       } else if (m.msg === 'messageProcessed') {
         // TODO: check that dates match
 
@@ -1044,10 +1071,7 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
       }
     });
 
-    /* eslint-disable no-unused-vars */
-    worker.on('exit', (m) => {
-    /* eslint-enable no-unused-vars */
-
+    worker.on('exit', () => {
       worker = null;
 
       // Receive results from child process
