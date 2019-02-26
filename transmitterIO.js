@@ -107,15 +107,19 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
   // Return true if there is no SGV or the most recent SGV was received from transmitter
   // Also return true if the latest SGV we have is more than 15 minutes old
   // Return false if most recent SGV was received from NS
-  const isControlling = async () => {
-    const sgv = await getGlucose();
+  const isControlling = async (sgv) => {
+    let latestSgv = sgv;
+
+    if (!latestSgv) {
+      latestSgv = await getGlucose();
+    }
 
     // inSession is only in the SGV record if it came from transmitter
-    if (!sgv || (typeof sgv.inSession !== 'undefined')) {
+    if (!latestSgv || (typeof latestSgv.inSession !== 'undefined')) {
       return true;
     }
 
-    if ((moment().valueOf() - sgv.readDateMills) > 15 * 60000) {
+    if ((moment().valueOf() - latestSgv.readDateMills) > 15 * 60000) {
       return true;
     }
 
@@ -148,17 +152,19 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
     }
   };
 
-  const stopSensorSession = async () => {
+  const stopSensorSession = async (stopTime) => {
     const now = moment();
+    let stopWhen = stopTime || now;
 
-    await storage.setItem('sensorStop', now.valueOf())
+    // if the commanded stop time is older than 2 hours, use current time
+    if (stopTime.diff(now, 'minutes') > 120) {
+      stopWhen = now;
+    }
+
+    await storage.setItem('sensorStop', stopWhen.valueOf())
       .catch((err) => {
         error(`Unable to store sensorStop: ${err}`);
       });
-
-    if (options.nightscout) {
-      xDripAPS.postEvent('Sensor Stop', now);
-    }
 
     await storage.del('glucoseHist');
     await calibration.clearCalibration(storage);
@@ -213,8 +219,8 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
       }
       debug(`Session Start: ${sessionStart} sensorStart: ${sensorInsert} sensorStop: ${sensorStop}`);
       stopTransmitterSession();
-      await stopSensorSession();
-    } else {
+      await stopSensorSession(sensorStop);
+    } else if (isControlling(sgv)) {
       const haveCal = await calibration.haveCalibration(storage);
 
       let latestBgCheckTime = null;
@@ -234,7 +240,7 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
           + '\nSee calibration log messages above for details'
           + '\n====================================',
         );
-        await stopSensorSession();
+        await stopSensorSession(sensorStop);
       }
     }
   };
@@ -249,7 +255,7 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
     return calibration.haveCalibration(storage);
   };
 
-  const startSession = async (startTime) => {
+  const startSession = async (startTime, sensorSerialCode) => {
     const sgv = await getGlucose();
 
     if (!inSensorSession(sgv)) {
@@ -257,7 +263,7 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
       // in either a transmitter session, extend session, or expired session
       await storage.setItem('sensorStart', Date.now())
         .catch((err) => {
-          error(`Error getting rig sensorStart: ${err}`);
+          error(`Error setting rig sensorStart: ${err}`);
         });
     }
 
@@ -271,7 +277,7 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
       });
 
       if (!startPending) {
-        pending.push({ date: startTime, type: 'StartSensor' });
+        pending.push({ date: startTime, type: 'StartSensor', sensorSerialCode });
 
         pending = filterPending(pending);
 
@@ -364,165 +370,251 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
     }
   };
 
-  const stateString = (state) => {
-    switch (state) {
+  const stateString = (sgv) => {
+    let state = null;
+
+    switch (sgv.state) {
       case 0x00:
-        return 'None';
+        state = 'None';
+        break;
       case 0x01:
-        return 'Stopped';
+        state = 'Stopped';
+        break;
       case 0x02:
-        return 'Warmup';
+        state = 'Warmup';
+        break;
       case 0x03:
-        return 'Unused';
+        state = 'Unused';
+        break;
       case 0x04:
-        return 'First calibration';
+        state = 'First calibration';
+        break;
       case 0x05:
-        return 'Second calibration';
+        state = 'Second calibration';
+        break;
       case 0x06:
-        return 'OK';
+        state = 'OK';
+        break;
       case 0x07:
-        return 'Need calibration';
+        state = 'Need calibration';
+        break;
       case 0x08:
-        return 'Calibration Error 1';
+        state = 'Calibration Error 1';
+        break;
       case 0x09:
-        return 'Calibration Error 0';
+        state = 'Calibration Error 0';
+        break;
       case 0x0a:
-        return 'Calibration Linearity Fit Failure';
+        state = 'Calibration Linearity Fit Failure';
+        break;
       case 0x0b:
-        return 'Sensor Failed Due to Counts Aberration';
+        state = 'Sensor Failed Due to Counts Aberration';
+        break;
       case 0x0c:
-        return 'Sensor Failed Due to Residual Aberration';
+        state = 'Sensor Failed Due to Residual Aberration';
+        break;
       case 0x0d:
-        return 'Out of Calibration Due To Outlier';
+        state = 'Out of Calibration Due To Outlier';
+        break;
       case 0x0e:
-        return 'Outlier Calibration Request - Need a Calibration';
+        state = 'Outlier Calibration Request - Need a Calibration';
+        break;
       case 0x0f:
-        return 'Session Expired';
+        state = 'Session Expired';
+        break;
       case 0x10:
-        return 'Session Failed Due To Unrecoverable Error';
+        state = 'Session Failed Due To Unrecoverable Error';
+        break;
       case 0x11:
-        return 'Session Failed Due To Transmitter Error';
+        state = 'Session Failed Due To Transmitter Error';
+        break;
       case 0x12:
-        return 'Temporary Session Failure - ???';
+        state = 'Temporary Session Failure - ???';
+        break;
       case 0x13:
-        return 'Reserved';
+        state = 'Reserved';
+        break;
       case 0x80:
-        return 'Calibration State - Start';
+        state = 'Calibration State - Start';
+        break;
       case 0x81:
-        return 'Calibration State - Start Up';
+        state = 'Calibration State - Start Up';
+        break;
       case 0x82:
-        return 'Calibration State - First of Two Calibrations Needed';
+        state = 'Calibration State - First of Two Calibrations Needed';
+        break;
       case 0x83:
-        return 'Calibration State - High Wedge Display With First BG';
+        state = 'Calibration State - High Wedge Display With First BG';
+        break;
       case 0x84:
-        return 'Unused Calibration State - Low Wedge Display With First BG';
+        state = 'Unused Calibration State - Low Wedge Display With First BG';
+        break;
       case 0x85:
-        return 'Calibration State - Second of Two Calibrations Needed';
+        state = 'Calibration State - Second of Two Calibrations Needed';
+        break;
       case 0x86:
-        return 'Calibration State - In Calibration Transmitter';
+        state = 'Calibration State - In Calibration Transmitter';
+        break;
       case 0x87:
-        return 'Calibration State - In Calibration Display';
+        state = 'Calibration State - In Calibration Display';
+        break;
       case 0x88:
-        return 'Calibration State - High Wedge Transmitter';
+        state = 'Calibration State - High Wedge Transmitter';
+        break;
       case 0x89:
-        return 'Calibration State - Low Wedge Transmitter';
+        state = 'Calibration State - Low Wedge Transmitter';
+        break;
       case 0x8a:
-        return 'Calibration State - Linearity Fit Transmitter';
+        state = 'Calibration State - Linearity Fit Transmitter';
+        break;
       case 0x8b:
-        return 'Calibration State - Out of Cal Due to Outlier Transmitter';
+        state = 'Calibration State - Out of Cal Due to Outlier Transmitter';
+        break;
       case 0x8c:
-        return 'Calibration State - High Wedge Display';
+        state = 'Calibration State - High Wedge Display';
+        break;
       case 0x8d:
-        return 'Calibration State - Low Wedge Display';
+        state = 'Calibration State - Low Wedge Display';
+        break;
       case 0x8e:
-        return 'Calibration State - Linearity Fit Display';
+        state = 'Calibration State - Linearity Fit Display';
+        break;
       case 0x8f:
-        return 'Calibration State - Session Not in Progress';
+        state = 'Calibration State - Session Not in Progress';
+        break;
       default:
-        return state ? `Unknown: 0x${state.toString(16)}` : '--';
+        state = sgv.state ? `Unknown: 0x${sgv.state.toString(16)}` : '--';
     }
+
+    return state;
   };
 
-  const stateStringShort = (state) => {
-    switch (state) {
+  const stateStringShort = (sgv) => {
+    let state = null;
+
+    switch (sgv.state) {
       case 0x00:
-        return 'None';
+        state = 'None';
+        break;
       case 0x01:
-        return 'Stopped';
+        state = 'Stopped';
+        break;
       case 0x02:
-        return 'Warmup';
+        state = 'Warmup';
+        break;
       case 0x03:
-        return 'Unused';
+        state = 'Unused';
+        break;
       case 0x04:
-        return '1st Cal';
+        state = '1st Cal';
+        break;
       case 0x05:
-        return '2nd Cal';
+        state = '2nd Cal';
+        break;
       case 0x06:
-        return 'OK';
+        state = 'OK';
+        break;
       case 0x07:
-        return 'Need Cal';
+        state = 'Need Cal';
+        break;
       case 0x08:
-        return 'Cal Err 1';
+        state = 'Cal Err 1';
+        break;
       case 0x09:
-        return 'Cal Err 0';
+        state = 'Cal Err 0';
+        break;
       case 0x0a:
-        return 'Cal Lin Fit';
+        state = 'Cal Lin Fit';
+        break;
       case 0x0b:
-        return 'Fail Counts';
+        state = 'Fail Counts';
+        break;
       case 0x0c:
-        return 'Fail Resid';
+        state = 'Fail Resid';
+        break;
       case 0x0d:
-        return 'Outlier';
+        state = 'Outlier';
+        break;
       case 0x0e:
-        return 'Cal NOW';
+        state = 'Cal NOW';
+        break;
       case 0x0f:
-        return 'Expired';
+        state = 'Expired';
+        break;
       case 0x10:
-        return 'Unrecoverable';
+        state = 'Unrecoverable';
+        break;
       case 0x11:
-        return 'Failed Tx';
+        state = 'Failed Tx';
+        break;
       case 0x12:
-        return 'Temp Fail';
+        state = 'Temp Fail';
+        break;
       case 0x13:
-        return 'Reserved';
+        state = 'Reserved';
+        break;
       case 0x80:
-        return 'Cal - Start';
+        state = 'Cal - Start';
+        break;
       case 0x81:
-        return 'Cal - Start Up';
+        state = 'Cal - Start Up';
+        break;
       case 0x82:
-        return '1 of 2 Cal';
+        state = '1 of 2 Cal';
+        break;
       case 0x83:
-        return 'Hi Wedge Display';
+        state = 'Hi Wedge Display';
+        break;
       case 0x84:
-        return 'Unused Cal';
+        state = 'Unused Cal';
+        break;
       case 0x85:
-        return '2 of 2 Cal';
+        state = '2 of 2 Cal';
+        break;
       case 0x86:
-        return 'In Cal Tx';
+        state = 'In Cal Tx';
+        break;
       case 0x87:
-        return 'In Cal Display';
+        state = 'In Cal Display';
+        break;
       case 0x88:
-        return 'Hi Wedge Tx';
+        state = 'Hi Wedge Tx';
+        break;
       case 0x89:
-        return 'Lo Wedge Tx';
+        state = 'Lo Wedge Tx';
+        break;
       case 0x8a:
-        return 'Lin Fit Tx';
+        state = 'Lin Fit Tx';
+        break;
       case 0x8b:
-        return 'Outlier Cal Tx';
+        state = 'Outlier Cal Tx';
+        break;
       case 0x8c:
-        return 'Hi Wedge Display';
+        state = 'Hi Wedge Display';
+        break;
       case 0x8d:
-        return 'Lo Wedge Display';
+        state = 'Lo Wedge Display';
+        break;
       case 0x8e:
-        return 'Lin Fit Display';
+        state = 'Lin Fit Display';
+        break;
       case 0x8f:
-        return 'No Session';
+        state = 'No Session';
+        break;
       default:
-        return state ? `Unknown: 0x${state.toString(16)}` : '--';
+        state = sgv.state ? `Unknown: 0x${sgv.state.toString(16)}` : '--';
     }
+
+    if (options.include_mode && sgv.inExtendedSession) {
+      state += '-ext';
+    } else if (options.include_mode && sgv.inExpiredSession) {
+      state += '-exp';
+    }
+
+    return state;
   };
 
-  const processNewGlucose = async (newSgv) => {
+  const processNewGlucose = async (newSgv, startingSession) => {
     let glucoseHist = null;
     let sendSGV = true;
 
@@ -542,17 +634,40 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
         error(`Error getting rig sensorStart: ${err}`);
       });
 
-    if (!sensorStart && transmitterInSession(sgv)) {
-      sensorStart = moment(sgv.sessionStartDate);
+    if (sensorStart) {
+      sensorStart = moment(sensorStart);
+    }
 
-      storage.setItem('sensorStart', sensorStart.valueOf())
-        .catch((err) => {
-          error(`Error saving rig sensorStart: ${err}`);
-        });
+    if (transmitterInSession(sgv)) {
+      const txmitterSessionStart = moment(sgv.sessionStartDate);
+      let updatedStart = false;
+
+      // If we don't have a sensor start, use the transmitter's session start
+      // Else, check if the sensor session start time reported by the transmitter is
+      // after the stored sensor start.
+      if (!sensorStart) {
+        sensorStart = txmitterSessionStart;
+        updatedStart = true;
+      } else if (txmitterSessionStart.diff(sensorStart, 'hours') > 2) {
+        log(
+          '\n===================================='
+          + '\nTransmitter session start date more than 2 hours after stored sensorStart'
+          + `\nSetting stored sensorStart to ${txmitterSessionStart.format()}`
+          + '\n====================================',
+        );
+        sensorStart = txmitterSessionStart;
+        updatedStart = true;
+      }
+
+      if (updatedStart) {
+        storage.setItem('sensorStart', sensorStart.valueOf())
+          .catch((err) => {
+            error(`Error saving rig sensorStart: ${err}`);
+          });
+      }
     }
 
     if (sensorStart) {
-      sensorStart = moment(sensorStart);
       debug(`SyncNS Rig sensor start - date: ${sensorStart.format()}`);
 
       if (!sensorInsert || (sensorStart.valueOf() > sensorInsert.valueOf())) {
@@ -613,7 +728,10 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
       sgv.mode = 'txmitter cal';
     }
 
-    if (sgv.state === 0x1 && (sgv.inExtendedSession || sgv.inExpiredSession)) {
+    // Only override the state if expired calibration enabled
+    // Otherwise, the session would be immediately stopped if a BG Check is entered
+    if (sgv.state === 0x1 && options.expired_cal
+      && (sgv.inExtendedSession || sgv.inExpiredSession)) {
       if (moment().diff(sensorStart, 'days') <= 4 && bgChecks.length > 0 && moment().diff(moment(bgChecks[bgChecks.length - 1].dateMills), 'hours') > 12) {
         // set session state to Need Calibration - cal every 12 hours for first 4 days
         sgv.state = 0x7;
@@ -626,8 +744,8 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
       }
     }
 
-    sgv.stateString = stateString(sgv.state);
-    sgv.stateStringShort = stateStringShort(sgv.state);
+    sgv.stateString = stateString(sgv);
+    sgv.stateStringShort = stateStringShort(sgv);
 
     sgv.txStatusString = txStatusString(sgv.status);
     sgv.txStatusStringShort = txStatusStringShort(sgv.status);
@@ -639,6 +757,16 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
 
       if ((!prevSgv || (sgv.state !== prevSgv.state)) && options.nightscout) {
         xDripAPS.postAnnouncement(`Sensor: ${sgv.stateString}`);
+      } else if (startingSession && sgv.state !== 0x02) {
+        xDripAPS.postAnnouncement(`Unable to Start Session: ${sgv.stateString} should have been 'Warmup'`);
+        log('============================================='
+          + '\nLookout sent start session command to transmitter; however,'
+          + '\ntransmitter did not start the session. Possible causes:'
+          + '\n  * Attempting to back start session at a time prior to the transmitter start time'
+          + '\n  * Attempting to back start session at a time prior to the prior session stop time'
+          + '\n  * Attempting to back start session (sometimes it just does not work)'
+          + '\n  * Previous session not stopped'
+          + '\n=============================================');
       }
     }
 
@@ -906,6 +1034,8 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
       return;
     }
 
+    let startingSession = false;
+
     // Remove the BT device so it starts from scratch
     removeBTDevice(id);
 
@@ -965,6 +1095,12 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
           log('Not requesting backfill - no glucose history');
         }
 
+        _.each(pending, (msg) => {
+          if (msg.type === 'StartSensor') {
+            startingSession = true;
+          }
+        });
+
         worker.send(pending);
         // NOTE: this will lead to missed messages if the rig
         // shuts down before acting on them, or in the
@@ -998,7 +1134,7 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
           + '\n====================================',
         );
 
-        processNewGlucose(glucose);
+        processNewGlucose(glucose, startingSession);
       } else if (m.msg === 'messageProcessed') {
         // TODO: check that dates match
 
@@ -1021,10 +1157,7 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
       }
     });
 
-    /* eslint-disable no-unused-vars */
-    worker.on('exit', (m) => {
-    /* eslint-enable no-unused-vars */
-
+    worker.on('exit', () => {
       worker = null;
 
       // Receive results from child process
@@ -1093,6 +1226,8 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
     }
   };
 
+  const g6Txmitter = () => (txId.substr(0, 1) === '8');
+
   // Create an object that can be used
   // to interact with the transmitter.
   const transmitterIO = {
@@ -1136,18 +1271,22 @@ module.exports = async (options, storage, storageLock, client, fakeMeter) => {
     },
 
     // Start a sensor session
-    startSensor: () => {
-      startSession(Date.now());
+    startSensor: (sensorSerialCode) => {
+      startSession(Date.now(), sensorSerialCode);
     },
 
     // Start a sensor session at time
     startSensorTime: (startTime) => {
-      startSession(startTime.valueOf());
+      if (g6Txmitter()) {
+        xDripAPS.postAnnouncement('G6 Start Unsupported by NS');
+      } else {
+        startSession(startTime.valueOf());
+      }
     },
 
     // Start a sensor session back started 2 hours
-    backStartSensor: () => {
-      startSession(Date.now() - 2 * 60 * 60 * 1000);
+    backStartSensor: (sensorSerialCode) => {
+      startSession(Date.now() - 2 * 60 * 60 * 1000, sensorSerialCode);
     },
 
     stopSensor: async () => {
