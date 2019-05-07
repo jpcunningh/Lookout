@@ -6,11 +6,11 @@ const error = Debug('transmitterIO:error');
 const debug = Debug('transmitterIO:debug');
 
 const moment = require('moment');
-const storage = require('node-persist');
+const persist = require('node-persist');
+const storage = require('./storage');
 const xDripAPS = require('./xDripAPS')();
 const syncNS = require('./syncNS');
 const TimeLimitedPromise = require('./timeLimitedPromise');
-const storageLock = require('./storageLock');
 const calibration = require('./calibration');
 
 /* eslint-disable-next-line no-unused-vars */
@@ -86,7 +86,7 @@ const test3 = async () => {
 const test4 = async () => {
   await storage.init({ dir: `${__dirname}/storage` });
 
-  await syncNS(storage, storageLock, false);
+  await syncNS(storage, null);
 
   const lastCal = await storage.getItem('g5Calibration')
     .catch((err) => {
@@ -129,13 +129,27 @@ const test5 = async () => {
   log(NSCal);
 };
 
+/* eslint-disable-next-line no-unused-vars */
+const test6 = async () => {
+  await persist.init({ dir: `${__dirname}/storage`, forgiveParseErrors: true });
+
+  storage.init(persist);
+
+  const item = await storage.getItem('test1'); /* eslint-disable-line no-unused-vars */
+
+  console.log(item);
+
+  storage.setItem('test1', 'test string');
+};
+
 let lookoutDebug = 'calcStats:*,calibration:*,clientIO:*,fakemeter:*,loopIO:*';
 lookoutDebug += ',pumpIO:*,storageLock:*,syncNS:*,transmitterIO:*,transmitterWorker:*';
 lookoutDebug += ',xDripAPS:*,transmitter';
 
 Debug.enable(lookoutDebug);
 
-test1();
+// test1();
 // test3();
 // test4();
 // test5();
+test6();
