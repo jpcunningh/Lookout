@@ -7,6 +7,7 @@ const debug = Debug('transmitterIO:debug');
 
 const moment = require('moment');
 const persist = require('node-persist');
+const store = require('node-persist');
 const storage = require('./storage');
 const xDripAPS = require('./xDripAPS')();
 const syncNS = require('./syncNS');
@@ -84,9 +85,10 @@ const test3 = async () => {
 
 /* eslint-disable-next-line no-unused-vars */
 const test4 = async () => {
-  await storage.init({ dir: `${__dirname}/storage` });
+  await store.init({ dir: `${__dirname}/storage` });
+  await storage.init(store);
 
-  await syncNS(storage, null);
+  await syncNS({ }, storage, null);
 
   const lastCal = await storage.getItem('g5Calibration')
     .catch((err) => {
@@ -103,13 +105,13 @@ const test4 = async () => {
       error(`Error getting glucoseHist: ${err}`);
     });
 
-  if (glucoseHist.length > 0 && lastCal) {
+  if (glucoseHist && glucoseHist.length > 0 && lastCal) {
     log(`     Txmitter Cal Value: ${calibration.calcGlucose(glucoseHist[glucoseHist.length - 1], lastCal)}`);
   } else {
     log('No Txmitter Cal Value');
   }
 
-  if (glucoseHist.length > 0 && expiredCal) {
+  if (glucoseHist && glucoseHist.length > 0 && expiredCal) {
     log(`Expired Cal Value: ${calibration.calcGlucose(glucoseHist[glucoseHist.length - 1], expiredCal)}`);
   } else {
     log('No Expired Cal Value');
@@ -150,6 +152,6 @@ Debug.enable(lookoutDebug);
 
 // test1();
 // test3();
-// test4();
+test4();
 // test5();
-test6();
+// test6();
