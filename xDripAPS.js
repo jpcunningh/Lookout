@@ -579,11 +579,12 @@ module.exports = () => ({
     });
   },
 
-  postEvent: (eventType, eventTime) => {
+  postEvent: (eventType, eventTime, notes) => {
     const entry = [{
       enteredBy: `xdripjs://${os.hostname()}`,
       eventType,
       created_at: eventTime.utc().format(),
+      notes,
     }];
 
     const secret = process.env.API_SECRET;
@@ -653,16 +654,22 @@ module.exports = () => ({
   BGChecksSince: async startTime => queryBGChecksSince(startTime),
 
   latestEvent: async (type) => {
-    let eventTime = null;
+    let nsEvent = null;
 
     const eventRecord = await queryLatestEvent(type);
 
-    if (eventRecord && (eventRecord.length > 0)
-      && eventRecord[0].created_at && (eventRecord[0].created_at.length > 10)) {
-      eventTime = moment(eventRecord[0].created_at);
+    if (eventRecord && (eventRecord.length > 0)) {
+      if (eventRecord[0].created_at && (eventRecord[0].created_at.length > 10)) {
+        nsEvent = {
+          date: moment(eventRecord[0].created_at),
+          notes: eventRecord[0].notes,
+        };
+      } else {
+        error(`Received event record for ${type}, but created_at field validation failed:\n%O`, eventRecord);
+      }
     }
 
-    return eventTime;
+    return nsEvent;
   },
 
   convertEntryToNS: (glucose) => {
