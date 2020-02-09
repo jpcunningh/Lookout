@@ -186,6 +186,7 @@ int main(int argc, char **argv)
 
     /* We are connected, now try to read the CGM data */
     try {
+#if 0
         std::vector<unsigned char> config_on {0x01};
         authentication->write_value(config_on);
         /* Read temperature data and display it */
@@ -208,6 +209,7 @@ int main(int argc, char **argv)
             std::cerr << "Object temp: " << object_temp << " ";
             std::cerr << std::endl;
         }
+#endif
     } catch (std::exception &e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
