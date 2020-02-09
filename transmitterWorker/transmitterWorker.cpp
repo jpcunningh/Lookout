@@ -24,7 +24,7 @@
 
 #include <tinyb.hpp>
 
-#include <algorithm.h>
+#include <algorithm>
 #include <vector>
 #include <iostream>
 #include <thread>
