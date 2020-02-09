@@ -56,17 +56,20 @@ int main(int argc, char **argv)
     }
 
     std::string serial = argv[1];
-    bool altBtChannel = false;
+    bool alt_bt_channel = false;
 
     if (argc > 2) {
         std::string str = argv[2];
         std::for_each(str.begin(), str.end(), [](char & c) {
             c = ::tolower(c);
         });
-        altBtChannel = !(str.compare("true"));
+        alt_bt_channel = !(str.compare("true"));
     }
 
-    std::cout << "Transmitter id: " << serial << " alt channel: " << altBtChannel << std::endl;
+    std::string device_name = "Dexcom" + serial.substr(serial.length()-3); 
+
+    std::cerr << "Transmitter id: " << serial << " alt channel: " << alt_bt_channel << std::endl;
+    std::cerr << "Device name: " << device_name << std::endl;
 
     BluetoothManager *manager = nullptr;
     try {
@@ -78,7 +81,7 @@ int main(int argc, char **argv)
 
     /* Start the discovery of devices */
     bool ret = manager->start_discovery();
-    std::cout << "Started = " << (ret ? "true" : "false") << std::endl;
+    std::cerr << "Started = " << (ret ? "true" : "false") << std::endl;
 
     BluetoothDevice *transmitter = NULL;
     BluetoothGattService *cgm_service = NULL;
@@ -88,19 +91,19 @@ int main(int argc, char **argv)
         auto list = manager->get_devices();
 
         if (list.size() > 0) {
-            std::cout << "Discovered devices: " << std::endl;
+            std::cerr << "Discovered devices: " << std::endl;
         }
 
         for (auto it = list.begin(); it != list.end(); ++it) {
 
-            std::cout << "Class = " << (*it)->get_class_name() << " ";
-            std::cout << "Path = " << (*it)->get_object_path() << " ";
-            std::cout << "Name = " << (*it)->get_name() << " ";
-            std::cout << "Connected = " << (*it)->get_connected() << " ";
-            std::cout << std::endl;
+            std::cerr << "Class = " << (*it)->get_class_name() << " ";
+            std::cerr << "Path = " << (*it)->get_object_path() << " ";
+            std::cerr << "Name = " << (*it)->get_name() << " ";
+            std::cerr << "Connected = " << (*it)->get_connected() << " ";
+            std::cerr << std::endl;
 
             /* Search for the device with the address given as a parameter to the program */
-            if ((*it)->get_address() == argv[1])
+            if ((*it)->get_name().compare(device_name) == 0)
                 transmitter = (*it).release();
         }
 
@@ -109,21 +112,21 @@ int main(int argc, char **argv)
             break;
         /* If not, wait and try again */
         std::this_thread::sleep_for(std::chrono::seconds(1));
-        std::cout << std::endl;
+        std::cerr << std::endl;
     }
 
     /* Stop the discovery (the device was found or number of tries ran out */
     ret = manager->stop_discovery();
-    std::cout << "Stopped = " << (ret ? "true" : "false") << std::endl;
+    std::cerr << "Stopped = " << (ret ? "true" : "false") << std::endl;
 
     if (transmitter == nullptr) {
-        std::cout << "Could not find device " << argv[1] << std::endl;
+        std::cerr << "Could not find device " << argv[1] << std::endl;
         return 1;
     }
 
     /* Connect to the device and get the list of services exposed by it */
     transmitter->connect();
-    std::cout << "Discovered services: " << std::endl;
+    std::cerr << "Discovered services: " << std::endl;
     while (true) {
         /* Wait for the device to come online */
         std::this_thread::sleep_for(std::chrono::seconds(4));
@@ -133,21 +136,21 @@ int main(int argc, char **argv)
             continue;
 
         for (auto it = list.begin(); it != list.end(); ++it) {
-            std::cout << "Class = " << (*it)->get_class_name() << " ";
-            std::cout << "Path = " << (*it)->get_object_path() << " ";
-            std::cout << "UUID = " << (*it)->get_uuid() << " ";
-            std::cout << "Device = " << (*it)->get_device().get_object_path() << " ";
-            std::cout << std::endl;
+            std::cerr << "Class = " << (*it)->get_class_name() << " ";
+            std::cerr << "Path = " << (*it)->get_object_path() << " ";
+            std::cerr << "UUID = " << (*it)->get_uuid() << " ";
+            std::cerr << "Device = " << (*it)->get_device().get_object_path() << " ";
+            std::cerr << std::endl;
 
             /* Search for the cgm service, by UUID */
-            if ((*it)->get_uuid() == TransmitterServices::CGMService)
+            if ((*it)->get_uuid().compare(TransmitterServices::CGMService) == 0)
                 cgm_service = (*it).release();
         }
         break;
     }
 
     if (cgm_service == nullptr) {
-        std::cout << "Could not find service f000aa00-0451-4000-b000-000000000000" << std::endl;
+        std::cerr << "Could not find service f000aa00-0451-4000-b000-000000000000" << std::endl;
         return 1;
     }
 
@@ -157,14 +160,14 @@ int main(int argc, char **argv)
     BluetoothGattCharacteristic *backfill = nullptr;
 
     auto list = cgm_service->get_characteristics();
-    std::cout << "Discovered characteristics: " << std::endl;
+    std::cerr << "Discovered characteristics: " << std::endl;
     for (auto it = list.begin(); it != list.end(); ++it) {
 
-        std::cout << "Class = " << (*it)->get_class_name() << " ";
-        std::cout << "Path = " << (*it)->get_object_path() << " ";
-        std::cout << "UUID = " << (*it)->get_uuid() << " ";
-        std::cout << "Service = " << (*it)->get_service().get_object_path() << " ";
-        std::cout << std::endl;
+        std::cerr << "Class = " << (*it)->get_class_name() << " ";
+        std::cerr << "Path = " << (*it)->get_object_path() << " ";
+        std::cerr << "UUID = " << (*it)->get_uuid() << " ";
+        std::cerr << "Service = " << (*it)->get_service().get_object_path() << " ";
+        std::cerr << std::endl;
 
         if ((*it)->get_uuid() == CGMServiceCharacteristics::Communication)
             communication = (*it).release();
@@ -177,7 +180,7 @@ int main(int argc, char **argv)
     }
 
     if (communication == nullptr || control == nullptr || authentication == nullptr || backfill == nullptr) {
-        std::cout << "Could not find characteristics." << std::endl;
+        std::cerr << "Could not find characteristics." << std::endl;
         return 1;
     }
 
@@ -192,28 +195,28 @@ int main(int argc, char **argv)
         if (size > 0) {
             data = response.data();
 
-            std::cout << "Raw data=[";
+            std::cerr << "Raw data=[";
             for (unsigned i = 0; i < response.size(); i++)
-                std::cout << std::hex << static_cast<int>(data[i]) << ", ";
-            std::cout << "] ";
+                std::cerr << std::hex << static_cast<int>(data[i]) << ", ";
+            std::cerr << "] ";
 
             uint16_t ambient_temp, object_temp;
             object_temp = data[0] | (data[1] << 8);
             ambient_temp = data[2] | (data[3] << 8);
 
-            std::cout << "Ambient temp: " << ambient_temp << " ";
-            std::cout << "Object temp: " << object_temp << " ";
-            std::cout << std::endl;
+            std::cerr << "Ambient temp: " << ambient_temp << " ";
+            std::cerr << "Object temp: " << object_temp << " ";
+            std::cerr << std::endl;
         }
     } catch (std::exception &e) {
-        std::cout << "Error: " << e.what() << std::endl;
+        std::cerr << "Error: " << e.what() << std::endl;
     }
 
     /* Disconnect from the device */
      try {
         transmitter->disconnect();
     } catch (std::exception &e) {
-        std::cout << "Error: " << e.what() << std::endl;
+        std::cerr << "Error: " << e.what() << std::endl;
     }
     return 0;
 }
