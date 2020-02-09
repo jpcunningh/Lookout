@@ -66,7 +66,7 @@ int main(int argc, char **argv)
         alt_bt_channel = !(str.compare("true"));
     }
 
-    std::string device_name = "Dexcom" + serial.substr(serial.length()-3); 
+    std::string device_name = "Dexcom" + serial.substr(serial.length()-2); 
 
     std::cerr << "Transmitter id: " << serial << " alt channel: " << alt_bt_channel << std::endl;
     std::cerr << "Device name: " << device_name << std::endl;
