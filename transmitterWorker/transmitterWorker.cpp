@@ -24,6 +24,7 @@
 
 #include <tinyb.hpp>
 
+#include <algorithm.h>
 #include <vector>
 #include <iostream>
 #include <thread>
@@ -58,8 +59,14 @@ int main(int argc, char **argv)
     bool altBtChannel = false;
 
     if (argc > 2) {
-      altBtChannel = argv[2] == "true";
+        std::string str = argv[2];
+        std::for_each(str.begin(), str.end(), [](char & c) {
+            c = ::tolower(c);
+        });
+        altBtChannel = !(str.compare("true"));
     }
+
+    std::cout << "Transmitter id: " << serial << " alt channel: " << altBtChannel << std::endl;
 
     BluetoothManager *manager = nullptr;
     try {
