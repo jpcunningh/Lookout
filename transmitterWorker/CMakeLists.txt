@@ -1,14 +1,14 @@
 cmake_minimum_required (VERSION 3.0.0 FATAL_ERROR)
-project (transmitterWorker LANGUAGES CXX)
+project (transmitterWorker LANGUAGES C CXX)
 
 FIND_PACKAGE (Threads REQUIRED)
 FIND_PACKAGE (PkgConfig REQUIRED)
 
 set (CMAKE_CXX_STANDARD 11)
 set (CMAKE_CXX_STANDARD_REQUIRED True)
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -fno-omit-frame-pointer -DDEBUG")
-set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -std=c++11 -Wextra -fno-omit-frame-pointer -DDEBUG")
+set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall -std=c++11")
 
 set (tinyb_PROJECT_DIR ~/src/tinyb)
 

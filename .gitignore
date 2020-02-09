@@ -31,6 +31,7 @@ bower_components
 
 # Compiled binary addons (http://nodejs.org/api/addons.html)
 build/Release
+build*/
 
 # Dependency directories
 node_modules/
@@ -60,3 +61,26 @@ typings/
 # node-persist local storage
 .node-persist
 storage
+
+# Object files
+*.o
+*.lib
+*.so
+*.so.*
+*.lo
+*.la
+*.pyc
+*.class
+
+# Temp files
+*.swp
+*.swo
+*~
+
+# Eclipse files
+.cproject
+.project
+
+# Archive files
+*.jar
+
