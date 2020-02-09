@@ -23,13 +23,23 @@ link_directories(
 )
 
 include_directories(
+  ${PROJECT_SOURCE_DIR}
   ${tinyb_LIB_INCLUDE_DIRS}
   ${GLIB2_INCLUDE_DIRS}
   ${GIO_INCLUDE_DIRS}
   ${GIO-UNIX_INCLUDE_DIRS}
 )
 
-add_executable (transmitterWorker transmitterWorker.cpp)
+set (transmitterWorker_SRCS
+  ${PROJECT_SOURCE_DIR}/authChallengeTxMessage.cpp
+  ${PROJECT_SOURCE_DIR}/authenticator.cpp
+  ${PROJECT_SOURCE_DIR}/bluetoothMessage.cpp
+  ${PROJECT_SOURCE_DIR}/encryptor.cpp
+  ${PROJECT_SOURCE_DIR}/transmitterWorker.cpp
+)
+
+
+add_executable (transmitterWorker ${transmitterWorker_SRCS})
 set_target_properties(transmitterWorker
     PROPERTIES
     CXX_STANDARD 11)
