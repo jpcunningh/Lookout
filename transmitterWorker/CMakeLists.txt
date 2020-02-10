@@ -33,18 +33,34 @@ include_directories(
 set (transmitterWorker_SRCS
   ${PROJECT_SOURCE_DIR}/authChallengeTxMessage.cpp
   ${PROJECT_SOURCE_DIR}/authenticator.cpp
+  ${PROJECT_SOURCE_DIR}/authRequestTxMessage.cpp
   ${PROJECT_SOURCE_DIR}/bluetoothMessage.cpp
   ${PROJECT_SOURCE_DIR}/encryptor.cpp
   ${PROJECT_SOURCE_DIR}/transmitterWorker.cpp
 )
 
+set (stub_SRCS
+  ${PROJECT_SOURCE_DIR}/authChallengeTxMessage.cpp
+  ${PROJECT_SOURCE_DIR}/authenticator.cpp
+  ${PROJECT_SOURCE_DIR}/authRequestTxMessage.cpp
+  ${PROJECT_SOURCE_DIR}/bluetoothMessage.cpp
+  ${PROJECT_SOURCE_DIR}/encryptor.cpp
+  ${PROJECT_SOURCE_DIR}/stub.cpp
+)
 
 add_executable (transmitterWorker ${transmitterWorker_SRCS})
 set_target_properties(transmitterWorker
     PROPERTIES
     CXX_STANDARD 11)
 
+add_executable (stub ${stub_SRCS})
+set_target_properties(stub
+    PROPERTIES
+    CXX_STANDARD 11)
+
 include_directories(${tinyb_PROJECT_DIR}/api)
 
-target_link_libraries (transmitterWorker tinyb)
+target_link_libraries (transmitterWorker tinyb cryptopp)
+
+target_link_libraries (stub tinyb cryptopp)
 
