@@ -12,16 +12,21 @@
 
 using namespace TransmitterWorker;
 
+unsigned char AuthChallengeTxMessage::opcode_ = 0x4;
+
 AuthChallengeTxMessage::AuthChallengeTxMessage(char *challenge, char *serial)
 {
-    opcode = 0x4;
     len = sizeof(authChallengeTxMsg);
+    buff = (unsigned char *)&authChallengeTxMsg;
 
     Encryptor e(challenge, serial);
 
-    authChallengeTxMsg.opcode = opcode;
+    authChallengeTxMsg.opcode = opcode_;
     strncpy((char *)authChallengeTxMsg.challengeHash, e.calculateHash().c_str(), sizeof(authChallengeTxMsg.challengeHash));
+}
 
-    buff = (unsigned char*)&authChallengeTxMsg;
+unsigned char AuthChallengeTxMessage::opcode()
+{
+    return opcode_;
 }
 

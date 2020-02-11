@@ -9,9 +9,11 @@
 class AuthRequestTxMessage : public BluetoothMessage
 {
   private:
+    static unsigned char opcode_;
+
     struct AuthRequestTxMsg {
       unsigned char opcode;
-      unsigned char singleUseToken[8];
+      char singleUseToken[8];
       unsigned char btChannel;
     };
 
@@ -25,6 +27,8 @@ class AuthRequestTxMessage : public BluetoothMessage
 
   public:
     AuthRequestTxMessage(bool altBtChannel);
+    unsigned char opcode();
+    std::string singleUseToken;
 };
 
 #endif

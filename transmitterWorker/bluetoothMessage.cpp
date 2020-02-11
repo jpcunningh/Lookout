@@ -11,7 +11,6 @@ using namespace TransmitterWorker;
 
 BluetoothMessage::BluetoothMessage()
 {
-  opcode = 0;
   len = 0;
 
   buff = nullptr;

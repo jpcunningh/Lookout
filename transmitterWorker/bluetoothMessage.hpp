@@ -4,7 +4,6 @@
 class BluetoothMessage
 {
   protected:
-    int opcode;
     int len;
     unsigned char *buff;
 
@@ -12,6 +11,7 @@ class BluetoothMessage
     BluetoothMessage();
     unsigned char *getBuff();
     int length();
+    virtual unsigned char opcode() = 0;
 };
 
 #endif
