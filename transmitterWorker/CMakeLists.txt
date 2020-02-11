@@ -31,6 +31,7 @@ include_directories(
 )
 
 set (transmitterWorker_SRCS
+  ${PROJECT_SOURCE_DIR}/authChallengeRxMessage.cpp
   ${PROJECT_SOURCE_DIR}/authChallengeTxMessage.cpp
   ${PROJECT_SOURCE_DIR}/authenticator.cpp
   ${PROJECT_SOURCE_DIR}/authRequestTxMessage.cpp
@@ -40,6 +41,7 @@ set (transmitterWorker_SRCS
 )
 
 set (stub_SRCS
+  ${PROJECT_SOURCE_DIR}/authChallengeRxMessage.cpp
   ${PROJECT_SOURCE_DIR}/authChallengeTxMessage.cpp
   ${PROJECT_SOURCE_DIR}/authenticator.cpp
   ${PROJECT_SOURCE_DIR}/authRequestTxMessage.cpp
