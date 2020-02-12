@@ -16,7 +16,8 @@ unsigned char AuthRequestTxMessage::opcode_ = 0x1;
 AuthRequestTxMessage::AuthRequestTxMessage(bool altBtChannel)
 {
     len = sizeof(authRequestTxMessage);
-    buff = (unsigned char *)&authRequestTxMessage;
+    auto ptr = reinterpret_cast<unsigned char *>(&authRequestTxMessage);
+    buff = std::vector<unsigned char>(ptr, ptr + len);
 
     authRequestTxMessage.opcode = opcode_;
     std::string id = generate_uuidv4();

@@ -1,15 +1,17 @@
 #ifndef BLUETOOTH_MESSAGE_HPP
 #define BLUETOOTH_MESSAGE_HPP
 
+#include <vector>
+
 class BluetoothMessage
 {
   protected:
     int len;
-    unsigned char *buff;
+    std::vector<unsigned char> buff;
 
   public:
     BluetoothMessage();
-    unsigned char *getBuff();
+    std::vector<unsigned char> getBuff();
     int length();
     virtual unsigned char opcode() = 0;
 };

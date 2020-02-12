@@ -1,5 +1,5 @@
-#ifndef AUTH_CHALLENGE_TX_MESSAGE_HPP
-#define AUTH_CHALLENGE_TX_MESSAGE_HPP
+#ifndef AUTH_REQUEST_TX_MESSAGE_HPP
+#define AUTH_REQUEST_TX_MESSAGE_HPP
 
 #include "bluetoothMessage.hpp"
 #include <sstream>

@@ -9,6 +9,7 @@
 
 #include "bluetoothServices.hpp"
 #include "transmitterWorker.hpp"
+#include "authenticator.hpp"
 
 using namespace TransmitterWorker;
 
@@ -32,19 +33,19 @@ int main(int argc, char **argv)
     }
 
     std::string serial = argv[1];
-    bool alt_bt_channel = false;
+    bool altBtChannel = false;
 
     if (argc > 2) {
         std::string str = argv[2];
         std::for_each(str.begin(), str.end(), [](char & c) {
             c = ::tolower(c);
         });
-        alt_bt_channel = !(str.compare("true"));
+        altBtChannel = !(str.compare("true"));
     }
 
     std::string device_name = "Dexcom" + serial.substr(serial.length()-2); 
 
-    std::cerr << "Transmitter id: " << serial << " alt channel: " << alt_bt_channel << std::endl;
+    std::cerr << "Transmitter id: " << serial << " alt channel: " << altBtChannel << std::endl;
     std::cerr << "Device name: " << device_name << std::endl;
 
     BluetoothManager *manager = nullptr;
@@ -105,7 +106,7 @@ int main(int argc, char **argv)
     std::cerr << "Discovered services: " << std::endl;
     while (true) {
         /* Wait for the device to come online */
-        std::this_thread::sleep_for(std::chrono::seconds(4));
+        std::this_thread::sleep_for(std::chrono::seconds(2));
 
         auto list = transmitter->get_services();
         if (list.empty())
@@ -130,10 +131,10 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    BluetoothGattCharacteristic *communication = nullptr;
-    BluetoothGattCharacteristic *control = nullptr;
-    BluetoothGattCharacteristic *authentication = nullptr;
-    BluetoothGattCharacteristic *backfill = nullptr;
+    BluetoothGattCharacteristic *commCharacteristic = nullptr;
+    BluetoothGattCharacteristic *controlCharacteristic = nullptr;
+    BluetoothGattCharacteristic *authCharacteristic = nullptr;
+    BluetoothGattCharacteristic *backfillCharacteristic = nullptr;
 
     auto list = cgm_service->get_characteristics();
     std::cerr << "Discovered characteristics: " << std::endl;
@@ -146,27 +147,31 @@ int main(int argc, char **argv)
         std::cerr << std::endl;
 
         if ((*it)->get_uuid() == CGMServiceCharacteristics::Communication)
-            communication = (*it).release();
+            commCharacteristic = (*it).release();
         else if ((*it)->get_uuid() == CGMServiceCharacteristics::Control)
-            control = (*it).release();
+            controlCharacteristic = (*it).release();
         else if ((*it)->get_uuid() == CGMServiceCharacteristics::Authentication)
-            authentication = (*it).release();
+            authCharacteristic = (*it).release();
         else if ((*it)->get_uuid() == CGMServiceCharacteristics::Backfill)
-            backfill = (*it).release();
+            backfillCharacteristic = (*it).release();
     }
 
-    if (communication == nullptr || control == nullptr || authentication == nullptr || backfill == nullptr) {
+    if (commCharacteristic == nullptr || controlCharacteristic == nullptr || authCharacteristic == nullptr || backfillCharacteristic == nullptr) {
         std::cerr << "Could not find characteristics." << std::endl;
         return 1;
     }
 
     /* We are connected, now try to read the CGM data */
     try {
+        Authenticator auth(authCharacteristic, serial, altBtChannel);
+        auth.authenticate();
+
+
 #if 0
         std::vector<unsigned char> config_on {0x01};
-        authentication->write_value(config_on);
+        authCharacteristic->write_value(config_on);
         /* Read temperature data and display it */
-        std::vector<unsigned char> response = authentication->read_value();
+        std::vector<unsigned char> response = authCharacteristic->read_value();
         unsigned char *data;
         unsigned int size = response.size();
         if (size > 0) {

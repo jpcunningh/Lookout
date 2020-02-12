@@ -15,13 +15,18 @@ using namespace TransmitterWorker;
 
 unsigned char AuthChallengeRxMessage::opcode_ = 0x3;
 
-AuthChallengeRxMessage::AuthChallengeRxMessage(void *msg, std::string singleUseToken, std::string serial)
+AuthChallengeRxMessage::AuthChallengeRxMessage(std::vector<unsigned char> &msg, std::string singleUseToken, std::string serial)
 {
     len = sizeof(AuthChallengeRxMsg);
 
-    AuthChallengeRxMsg *msg_ = (AuthChallengeRxMsg *)msg;
+    if (msg.size() != len)
+    {
+        throw AuthChallengeRxException("incorrect message length");
+    }
 
-    tokenHash = "";
+    AuthChallengeRxMsg *msg_ = (AuthChallengeRxMsg *)msg.data();
+
+    std::string tokenHash = "";
     challenge = "";
     tokenHash.append(msg_->tokenHash, sizeof(msg_->tokenHash));
     challenge.append(msg_->challenge, sizeof(msg_->challenge));
@@ -29,7 +34,7 @@ AuthChallengeRxMessage::AuthChallengeRxMessage(void *msg, std::string singleUseT
     Encryptor e(singleUseToken, serial);
 
     if (tokenHash.compare(e.calculateHash()) != 0) {
-        throw AuthChallengeException();
+        throw AuthChallengeRxException("transmitter failed authentication validation");
     }
 }
 

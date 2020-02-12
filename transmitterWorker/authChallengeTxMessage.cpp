@@ -14,10 +14,12 @@ using namespace TransmitterWorker;
 
 unsigned char AuthChallengeTxMessage::opcode_ = 0x4;
 
-AuthChallengeTxMessage::AuthChallengeTxMessage(char *challenge, char *serial)
+AuthChallengeTxMessage::AuthChallengeTxMessage(std::string challenge, std::string serial)
 {
     len = sizeof(authChallengeTxMsg);
-    buff = (unsigned char *)&authChallengeTxMsg;
+
+    auto ptr = reinterpret_cast<unsigned char *>(&authChallengeTxMsg);
+    buff = std::vector<unsigned char>(ptr, ptr + len);
 
     Encryptor e(challenge, serial);
 

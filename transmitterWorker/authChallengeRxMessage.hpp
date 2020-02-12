@@ -1,5 +1,5 @@
-#ifndef AUTH_CHALLENGE_TX_MESSAGE_HPP
-#define AUTH_CHALLENGE_TX_MESSAGE_HPP
+#ifndef AUTH_CHALLENGE_RX_MESSAGE_HPP
+#define AUTH_CHALLENGE_RX_MESSAGE_HPP
 
 #include <exception>
 
@@ -17,18 +17,26 @@ class AuthChallengeRxMessage : public BluetoothMessage
     };
 
   public:
-    AuthChallengeRxMessage(void *msg, std::string singleUseToken, std::string serial);
+    AuthChallengeRxMessage(std::vector<unsigned char> &msg, std::string singleUseToken, std::string tx_serial);
     unsigned char opcode();
 
-    std::string tokenHash;
     std::string challenge;
 };
 
-class AuthChallengeException : public std::exception
+class AuthChallengeRxException : public std::exception
 {
+  private:
+    const char* errorMsg;
+
+  public:
+    AuthChallengeRxException(const char *error)
+    {
+        errorMsg = error;
+    }
+
     const char * what() const throw()
     {
-      return "Transmitter failed authentication";
+        return errorMsg;
     }
 };
 

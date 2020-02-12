@@ -8,10 +8,12 @@ using namespace TransmitterWorker;
 class Authenticator
 {
     private:
-      BluetoothGattCharacteristic *authentication;
+      BluetoothGattCharacteristic *auth;
+      bool altBtChannel;
+      std::string serial;
 
     public:
-      Authenticator(BluetoothGattCharacteristic *auth);
+      Authenticator(BluetoothGattCharacteristic *authCharacteristic, std::string txSerial, bool altBtChan);
       int authenticate();
 };
 
