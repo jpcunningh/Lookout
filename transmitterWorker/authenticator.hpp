@@ -15,6 +15,8 @@ class Authenticator
     public:
       Authenticator(BluetoothGattCharacteristic *authCharacteristic, std::string txSerial, bool altBtChan);
       int authenticate();
+      bool authenticated;
+      bool bonded;
 };
 
 #endif

@@ -10,6 +10,7 @@
 #include "authRequestTxMessage.hpp"
 #include "authChallengeRxMessage.hpp"
 #include "authChallengeTxMessage.hpp"
+#include "authStatusRxMessage.hpp"
 
 using namespace TransmitterWorker;
 
@@ -32,7 +33,11 @@ int Authenticator::authenticate()
         AuthChallengeTxMessage authChallengeTxMsg(authChallengeRxMsg.challenge, serial);
         auth->write_value(authChallengeTxMsg.getBuff());
 
+        response = auth->read_value();
+        AuthStatusRxMessage authStatusRxMsg(response);
 
+        authenticated = authStatusRxMsg.authenticated;
+        bonded = authStatusRxMsg.bonded;
     } catch (std::exception &e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }

@@ -35,6 +35,7 @@ set (transmitterWorker_SRCS
   ${PROJECT_SOURCE_DIR}/authChallengeTxMessage.cpp
   ${PROJECT_SOURCE_DIR}/authenticator.cpp
   ${PROJECT_SOURCE_DIR}/authRequestTxMessage.cpp
+  ${PROJECT_SOURCE_DIR}/authStatusRxMessage.cpp
   ${PROJECT_SOURCE_DIR}/bluetoothMessage.cpp
   ${PROJECT_SOURCE_DIR}/encryptor.cpp
   ${PROJECT_SOURCE_DIR}/transmitterWorker.cpp
@@ -45,6 +46,7 @@ set (stub_SRCS
   ${PROJECT_SOURCE_DIR}/authChallengeTxMessage.cpp
   ${PROJECT_SOURCE_DIR}/authenticator.cpp
   ${PROJECT_SOURCE_DIR}/authRequestTxMessage.cpp
+  ${PROJECT_SOURCE_DIR}/authStatusRxMessage.cpp
   ${PROJECT_SOURCE_DIR}/bluetoothMessage.cpp
   ${PROJECT_SOURCE_DIR}/encryptor.cpp
   ${PROJECT_SOURCE_DIR}/stub.cpp
