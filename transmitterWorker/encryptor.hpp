@@ -9,7 +9,7 @@ class Encryptor
     std::string plain;
 
   public:
-    Encryptor(std::string plain, std::string key);
+    Encryptor(std::vector<unsigned char> challenge, std::string serial);
     std::string calculateHash();
 };
 

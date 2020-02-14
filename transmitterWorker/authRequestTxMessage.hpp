@@ -28,7 +28,7 @@ class AuthRequestTxMessage : public BluetoothMessage
   public:
     AuthRequestTxMessage(bool altBtChannel);
     unsigned char opcode();
-    std::string singleUseToken;
+    std::vector<unsigned char> singleUseToken;
 };
 
 #endif

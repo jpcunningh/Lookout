@@ -6,7 +6,7 @@
 class BluetoothMessage
 {
   protected:
-    int len;
+    unsigned int len;
     std::vector<unsigned char> buff;
 
   public:

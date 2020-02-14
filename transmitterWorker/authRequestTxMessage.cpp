@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "authRequestTxMessage.hpp"
+#include "uuidv4.hpp"
 
 #include "transmitterWorker.hpp"
 
@@ -16,16 +17,20 @@ unsigned char AuthRequestTxMessage::opcode_ = 0x1;
 AuthRequestTxMessage::AuthRequestTxMessage(bool altBtChannel)
 {
     len = sizeof(authRequestTxMessage);
-    auto ptr = reinterpret_cast<unsigned char *>(&authRequestTxMessage);
-    buff = std::vector<unsigned char>(ptr, ptr + len);
-
     authRequestTxMessage.opcode = opcode_;
-    std::string id = generate_uuidv4();
-    strncpy((char *)authRequestTxMessage.singleUseToken, id.substr(0, 8).c_str(), 0);
+    uuidv4 uuid;
+    std::vector<unsigned char> id = uuid.generate();
+
+    singleUseToken.insert(singleUseToken.begin(), id.begin(), id.begin() + sizeof(authRequestTxMessage.singleUseToken));
+
+    for (unsigned int i = 0; i < sizeof(authRequestTxMessage.singleUseToken); ++i) {
+      authRequestTxMessage.singleUseToken[i] = id[i];
+    }
+
     authRequestTxMessage.btChannel = (!altBtChannel) ? 0x2 : 0x1;
 
-    singleUseToken = "";
-    singleUseToken.append(authRequestTxMessage.singleUseToken, sizeof(authRequestTxMessage.singleUseToken));
+    auto ptr = reinterpret_cast<unsigned char *>(&authRequestTxMessage);
+    buff = std::vector<unsigned char>(ptr, ptr + len);
 }
 
 unsigned char AuthRequestTxMessage::opcode()
@@ -44,10 +49,10 @@ unsigned int AuthRequestTxMessage::random_char()
 std::string AuthRequestTxMessage::generate_hex(const unsigned int len)
 {
     std::stringstream ss;
-    for (auto i = 0; i < len; i++) {
+    for (unsigned int i = 0; i < len; i++) {
         const auto rc = random_char();
         std::stringstream hexstream;
-        hexstream << std::hex << rc;
+        hexstream << std::uppercase << std::hex << rc;
         auto hex = hexstream.str();
         ss << (hex.length() < 2 ? '0' + hex : hex);
     }
@@ -69,7 +74,7 @@ std::string AuthRequestTxMessage::generate_uuidv4()
     // clear what's there, then or in the 4.
     c7 = (c7 & 0x0F) | 0x40;
     std::stringstream hexstream;
-    hexstream << std::hex << c7;
+    hexstream << std::uppercase << std::hex << c7;
     auto hex = hexstream.str();
     std::string c7_s = (hex.length() < 2 ? '0' + hex : hex);
 
@@ -78,13 +83,13 @@ std::string AuthRequestTxMessage::generate_uuidv4()
     c9 = (c9 & 0x3F) | 0x80;
     hexstream.str(std::string());
     hexstream.clear();
-    hexstream << std::hex << c9;
+    hexstream << std::uppercase << std::hex << c9;
     hex = hexstream.str();
     std::string c9_s = (hex.length() < 2 ? '0' + hex : hex);
 
-    s1.replace(6, 2, c7_s);
+    s2.replace(0, 2, c7_s);
 
-    s2.replace(0, 2, c9_s);
+    s3.replace(0, 2, c9_s);
 
     return s1 + "-" + s2 + "-" + s3 + "-" + s4 + "-" + s5;
 }

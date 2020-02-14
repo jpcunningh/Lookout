@@ -4,6 +4,8 @@ project (transmitterWorker LANGUAGES C CXX)
 FIND_PACKAGE (Threads REQUIRED)
 FIND_PACKAGE (PkgConfig REQUIRED)
 
+set(CMAKE_BUILD_TYPE Debug)
+
 set (CMAKE_CXX_STANDARD 11)
 set (CMAKE_CXX_STANDARD_REQUIRED True)
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
@@ -38,6 +40,7 @@ set (transmitterWorker_SRCS
   ${PROJECT_SOURCE_DIR}/authStatusRxMessage.cpp
   ${PROJECT_SOURCE_DIR}/bluetoothMessage.cpp
   ${PROJECT_SOURCE_DIR}/encryptor.cpp
+  ${PROJECT_SOURCE_DIR}/uuidv4.cpp
   ${PROJECT_SOURCE_DIR}/transmitterWorker.cpp
 )
 
@@ -49,6 +52,7 @@ set (stub_SRCS
   ${PROJECT_SOURCE_DIR}/authStatusRxMessage.cpp
   ${PROJECT_SOURCE_DIR}/bluetoothMessage.cpp
   ${PROJECT_SOURCE_DIR}/encryptor.cpp
+  ${PROJECT_SOURCE_DIR}/uuidv4.cpp
   ${PROJECT_SOURCE_DIR}/stub.cpp
 )
 

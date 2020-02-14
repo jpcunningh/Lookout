@@ -25,10 +25,11 @@ using CryptoPP::ECB_Mode;
 
 using namespace TransmitterWorker;
 
-Encryptor::Encryptor(std::string challenge, std::string serial)
+Encryptor::Encryptor(std::vector<unsigned char> challenge, std::string serial)
 {
     key = "00" + serial + "00" + serial;
-    plain = challenge;
+
+    plain.assign(challenge.begin(), challenge.end());
 }
 
 std::string Encryptor::calculateHash()

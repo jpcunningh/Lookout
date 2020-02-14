@@ -166,31 +166,9 @@ int main(int argc, char **argv)
         Authenticator auth(authCharacteristic, serial, altBtChannel);
         auth.authenticate();
 
-
-#if 0
-        std::vector<unsigned char> config_on {0x01};
-        authCharacteristic->write_value(config_on);
-        /* Read temperature data and display it */
-        std::vector<unsigned char> response = authCharacteristic->read_value();
-        unsigned char *data;
-        unsigned int size = response.size();
-        if (size > 0) {
-            data = response.data();
-
-            std::cerr << "Raw data=[";
-            for (unsigned i = 0; i < response.size(); i++)
-                std::cerr << std::hex << static_cast<int>(data[i]) << ", ";
-            std::cerr << "] ";
-
-            uint16_t ambient_temp, object_temp;
-            object_temp = data[0] | (data[1] << 8);
-            ambient_temp = data[2] | (data[3] << 8);
-
-            std::cerr << "Ambient temp: " << ambient_temp << " ";
-            std::cerr << "Object temp: " << object_temp << " ";
-            std::cerr << std::endl;
-        }
-#endif
+        std::cerr << "Transmitter bonded: " << auth.bonded << "\n";
+        std::cerr << "Transmitter authenticated: " << auth.authenticated;
+        std::cerr << std::endl;
     } catch (std::exception &e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }

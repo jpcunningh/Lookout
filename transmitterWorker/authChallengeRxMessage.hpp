@@ -17,10 +17,10 @@ class AuthChallengeRxMessage : public BluetoothMessage
     };
 
   public:
-    AuthChallengeRxMessage(std::vector<unsigned char> &msg, std::string singleUseToken, std::string tx_serial);
+    AuthChallengeRxMessage(std::vector<unsigned char> &msg, std::vector<unsigned char> singleUseToken, std::string serial);
     unsigned char opcode();
 
-    std::string challenge;
+    std::vector<unsigned char> challenge;
 };
 
 class AuthChallengeRxException : public std::exception

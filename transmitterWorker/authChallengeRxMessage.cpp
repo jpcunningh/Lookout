@@ -15,7 +15,7 @@ using namespace TransmitterWorker;
 
 unsigned char AuthChallengeRxMessage::opcode_ = 0x3;
 
-AuthChallengeRxMessage::AuthChallengeRxMessage(std::vector<unsigned char> &msg, std::string singleUseToken, std::string serial)
+AuthChallengeRxMessage::AuthChallengeRxMessage(std::vector<unsigned char> &msg, std::vector<unsigned char> singleUseToken, std::string serial)
 {
     len = sizeof(AuthChallengeRxMsg);
 
@@ -27,9 +27,10 @@ AuthChallengeRxMessage::AuthChallengeRxMessage(std::vector<unsigned char> &msg, 
     AuthChallengeRxMsg *msg_ = (AuthChallengeRxMsg *)msg.data();
 
     std::string tokenHash = "";
-    challenge = "";
     tokenHash.append(msg_->tokenHash, sizeof(msg_->tokenHash));
-    challenge.append(msg_->challenge, sizeof(msg_->challenge));
+
+    challenge.clear();
+    challenge.insert(challenge.end(), msg_->challenge, msg_->challenge + sizeof(msg_->challenge));
 
     Encryptor e(singleUseToken, serial);
 

@@ -15,7 +15,7 @@ class AuthChallengeTxMessage : public BluetoothMessage
 
     AuthChallengTxMsg authChallengeTxMsg;
   public:
-    AuthChallengeTxMessage(std::string challenge, std::string serial);
+    AuthChallengeTxMessage(std::vector<unsigned char> challenge, std::string serial);
     unsigned char opcode();
 };
 

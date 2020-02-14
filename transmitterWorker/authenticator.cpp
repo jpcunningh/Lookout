@@ -18,7 +18,10 @@ Authenticator::Authenticator(BluetoothGattCharacteristic *authCharacteristic, st
 {
   auth = authCharacteristic;
   serial = txSerial;
-  altBtChannel = altBtChannel;
+  altBtChannel = altBtChan;
+
+  authenticated = false;
+  bonded = false;
 }
 
 int Authenticator::authenticate()
