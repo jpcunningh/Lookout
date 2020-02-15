@@ -39,7 +39,13 @@ set (transmitterWorker_SRCS
   ${PROJECT_SOURCE_DIR}/authRequestTxMessage.cpp
   ${PROJECT_SOURCE_DIR}/authStatusRxMessage.cpp
   ${PROJECT_SOURCE_DIR}/bluetoothMessage.cpp
+  ${PROJECT_SOURCE_DIR}/bondRequestTxMessage.cpp
+  ${PROJECT_SOURCE_DIR}/crc.cpp
   ${PROJECT_SOURCE_DIR}/encryptor.cpp
+  ${PROJECT_SOURCE_DIR}/hexdump.cpp
+  ${PROJECT_SOURCE_DIR}/keepAliveTxMessage.cpp
+  ${PROJECT_SOURCE_DIR}/transmitterTimeTxMessage.cpp
+  ${PROJECT_SOURCE_DIR}/transmitterTimeRxMessage.cpp
   ${PROJECT_SOURCE_DIR}/uuidv4.cpp
   ${PROJECT_SOURCE_DIR}/transmitterWorker.cpp
 )
@@ -51,7 +57,13 @@ set (stub_SRCS
   ${PROJECT_SOURCE_DIR}/authRequestTxMessage.cpp
   ${PROJECT_SOURCE_DIR}/authStatusRxMessage.cpp
   ${PROJECT_SOURCE_DIR}/bluetoothMessage.cpp
+  ${PROJECT_SOURCE_DIR}/bondRequestTxMessage.cpp
+  ${PROJECT_SOURCE_DIR}/crc.cpp
   ${PROJECT_SOURCE_DIR}/encryptor.cpp
+  ${PROJECT_SOURCE_DIR}/hexdump.cpp
+  ${PROJECT_SOURCE_DIR}/keepAliveTxMessage.cpp
+  ${PROJECT_SOURCE_DIR}/transmitterTimeTxMessage.cpp
+  ${PROJECT_SOURCE_DIR}/transmitterTimeRxMessage.cpp
   ${PROJECT_SOURCE_DIR}/uuidv4.cpp
   ${PROJECT_SOURCE_DIR}/stub.cpp
 )

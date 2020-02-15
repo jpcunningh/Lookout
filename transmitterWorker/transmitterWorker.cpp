@@ -10,6 +10,10 @@
 #include "bluetoothServices.hpp"
 #include "transmitterWorker.hpp"
 #include "authenticator.hpp"
+#include "bondRequestTxMessage.hpp"
+#include "keepAliveTxMessage.hpp"
+#include "transmitterTimeTxMessage.hpp"
+#include "transmitterTimeRxMessage.hpp"
 
 using namespace TransmitterWorker;
 
@@ -169,6 +173,28 @@ int main(int argc, char **argv)
         std::cerr << "Transmitter bonded: " << auth.bonded << "\n";
         std::cerr << "Transmitter authenticated: " << auth.authenticated;
         std::cerr << std::endl;
+
+        if (!auth.bonded) {
+            std::cerr << "Requesting bond" << std::endl;
+            KeepAliveTxMessage keepAliveMsg(25);
+            
+            authCharacteristic->write_value(keepAliveMsg.getBuff());
+
+            BondRequestTxMessage bondRequestMsg;
+
+            authCharacteristic->write_value(bondRequestMsg.getBuff());
+        }
+
+        TransmitterTimeTxMessage timeTxMsg;
+
+        controlCharacteristic->write_value(timeTxMsg.getBuff());
+
+        std::vector<unsigned char> response = controlCharacteristic->read_value();
+        TransmitterTimeRxMessage timeRxMsg(response);
+
+        std::cerr << "Transmitter time: " << timeRxMsg.currentTime;
+        std::cerr << "Transmitter status: " << timeRxMsg.status;
+        std::cerr << "Transmitter session start time: " << timeRxMsg.sessionStartTime;
     } catch (std::exception &e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
