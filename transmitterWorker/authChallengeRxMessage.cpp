@@ -21,10 +21,14 @@ AuthChallengeRxMessage::AuthChallengeRxMessage(std::vector<unsigned char> &msg, 
 
     if (msg.size() != len)
     {
-        throw AuthChallengeRxException("incorrect message length");
+        throw AuthChallengeRxException("incorrect AuthChallengeRxMessage length");
     }
 
     AuthChallengeRxMsg *msg_ = (AuthChallengeRxMsg *)msg.data();
+
+    if (msg_->opcode != opcode_) {
+        throw AuthChallengeRxException("incorrect AuthChallengeRxMessage opcode");
+    }
 
     std::string tokenHash = "";
     tokenHash.append(msg_->tokenHash, sizeof(msg_->tokenHash));
@@ -34,7 +38,9 @@ AuthChallengeRxMessage::AuthChallengeRxMessage(std::vector<unsigned char> &msg, 
 
     Encryptor e(singleUseToken, serial);
 
-    if (tokenHash.compare(e.calculateHash()) != 0) {
+    std::string testHash = e.calculateHash().substr(0, 8);
+
+    if (tokenHash.compare(testHash) != 0) {
         throw AuthChallengeRxException("transmitter failed authentication validation");
     }
 }

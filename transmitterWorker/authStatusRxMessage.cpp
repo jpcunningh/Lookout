@@ -19,10 +19,14 @@ AuthStatusRxMessage::AuthStatusRxMessage(std::vector<unsigned char> &msg)
 
     if (msg.size() != len)
     {
-        throw AuthStatusRxException("incorrect message AuthStatusRxMessage length");
+        throw AuthStatusRxException("incorrect AuthStatusRxMessage length");
     }
 
     AuthStatusRxMsg *msg_ = (AuthStatusRxMsg *)msg.data();
+
+    if (msg_->opcode != opcode_) {
+        throw AuthStatusRxException("incorrect AuthStatusRxMessage opcode");
+    }
 
     authenticated = msg_->authenticated != 0;
     bonded = msg_->bonded != 0;
