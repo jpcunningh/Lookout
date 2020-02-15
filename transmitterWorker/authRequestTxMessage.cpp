@@ -21,7 +21,8 @@ AuthRequestTxMessage::AuthRequestTxMessage(bool altBtChannel)
     uuidv4 uuid;
     std::vector<unsigned char> id = uuid.generate();
 
-    singleUseToken.insert(singleUseToken.begin(), id.begin(), id.begin() + sizeof(authRequestTxMessage.singleUseToken));
+    singleUseToken.clear();
+    singleUseToken.insert(singleUseToken.end(), id.begin(), id.begin() + sizeof(authRequestTxMessage.singleUseToken));
 
     for (unsigned int i = 0; i < sizeof(authRequestTxMessage.singleUseToken); ++i) {
       authRequestTxMessage.singleUseToken[i] = id[i];

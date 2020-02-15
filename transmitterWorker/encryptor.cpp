@@ -30,14 +30,15 @@ Encryptor::Encryptor(std::vector<unsigned char> challenge, std::string serial)
     key = "00" + serial + "00" + serial;
 
     plain.assign(challenge.begin(), challenge.end());
+    plain.append(challenge.begin(), challenge.end());
 }
 
 std::string Encryptor::calculateHash()
 {
     try
     {
-        byte keyByte[sizeof(key)];
-        strncpy((char *)keyByte, key.c_str(), sizeof(key));
+        byte keyByte[key.length()];
+        strncpy((char *)keyByte, key.c_str(), key.length());
 
         ECB_Mode< AES >::Encryption e;
         e.SetKey(keyByte, sizeof(keyByte));
