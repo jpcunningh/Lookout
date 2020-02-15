@@ -11,7 +11,7 @@
 
 using namespace TransmitterWorker;
 
-unsigned char AuthStatusRxMessage::opcode_ = 0x3;
+unsigned char AuthStatusRxMessage::opcode_ = 0x5;
 
 AuthStatusRxMessage::AuthStatusRxMessage(std::vector<unsigned char> &msg)
 {

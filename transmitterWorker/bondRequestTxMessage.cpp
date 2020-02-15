@@ -11,7 +11,7 @@
 
 using namespace TransmitterWorker;
 
-unsigned char BondRequestTxMessage::opcode_ = 0x6;
+unsigned char BondRequestTxMessage::opcode_ = 0x7;
 
 BondRequestTxMessage::BondRequestTxMessage()
 {
