@@ -21,6 +21,7 @@
 using namespace TransmitterWorker;
 
 std::atomic<bool> running(true);
+std::atomic<bool> debug_scan(false);
 
 void signal_handler(int signum)
 {
@@ -74,7 +75,7 @@ int main(int argc, char **argv)
         /* Get the list of devices */
         auto list = manager->get_devices();
 
-        if (list.size() > 0) {
+        if (debug_scan && (list.size() > 0)) {
             auto timenow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
             std::cerr << "Looking for: " << device_name << "\n";
             std::cerr << "Discovered devices at " << ctime(&timenow) << std::endl;
@@ -82,15 +83,23 @@ int main(int argc, char **argv)
 
         for (auto it = list.begin(); it != list.end(); ++it) {
 
-            std::cerr << "Class = " << (*it)->get_class_name() << " ";
-            std::cerr << "Path = " << (*it)->get_object_path() << " ";
-            std::cerr << "Name = " << (*it)->get_name() << " ";
-            std::cerr << "Connected = " << (*it)->get_connected() << " ";
-            std::cerr << std::endl;
-
             /* Search for the device with the address given as a parameter to the program */
-            if ((*it)->get_name().compare(device_name) == 0)
+            if ((*it)->get_name().compare(device_name) == 0) {
+                std::cerr << "Class = " << (*it)->get_class_name() << " ";
+                std::cerr << "Path = " << (*it)->get_object_path() << " ";
+                std::cerr << "Name = " << (*it)->get_name() << " ";
+                std::cerr << "Connected = " << (*it)->get_connected() << " ";
+                std::cerr << std::endl;
+
                 transmitter = (*it).release();
+            } else if (debug_scan) {
+                std::cerr << "Class = " << (*it)->get_class_name() << " ";
+                std::cerr << "Path = " << (*it)->get_object_path() << " ";
+                std::cerr << "Name = " << (*it)->get_name() << " ";
+                std::cerr << "Connected = " << (*it)->get_connected() << " ";
+                std::cerr << std::endl;
+            }
+
         }
 
         /* Free the list of devices and stop if the device was found */
