@@ -19,12 +19,6 @@ class AuthRequestTxMessage : public BluetoothMessage
 
     AuthRequestTxMsg authRequestTxMessage;
 
-    unsigned int random_char();
-
-    std::string generate_hex(const unsigned int len);
-
-    std::string generate_uuidv4();
-
   public:
     AuthRequestTxMessage(bool altBtChannel);
     unsigned char opcode();
