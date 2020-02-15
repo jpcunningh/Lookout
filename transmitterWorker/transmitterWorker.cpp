@@ -188,7 +188,7 @@ int main(int argc, char **argv)
         std::cerr << "Transmitter authenticated: " << auth.authenticated;
         std::cerr << std::endl;
 
-        if (!auth.bonded) {
+        if (auth.bonded != 0x1) {
             std::cerr << "Requesting bond" << std::endl;
 
             KeepAliveTxMessage keepAliveMsg(25);
