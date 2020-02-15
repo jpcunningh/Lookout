@@ -75,7 +75,7 @@ int main(int argc, char **argv)
 
         if (list.size() > 0) {
             auto timenow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-            std::cerr << "Looking for: " << serial << "\n";
+            std::cerr << "Looking for: " << device_name << "\n";
             std::cerr << "Discovered devices at " << ctime(&timenow) << std::endl;
         }
 
