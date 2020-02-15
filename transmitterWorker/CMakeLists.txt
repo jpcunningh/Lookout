@@ -50,7 +50,7 @@ set (transmitterWorker_SRCS
   ${PROJECT_SOURCE_DIR}/transmitterWorker.cpp
 )
 
-set (stub_SRCS
+set (testStub_SRCS
   ${PROJECT_SOURCE_DIR}/authChallengeRxMessage.cpp
   ${PROJECT_SOURCE_DIR}/authChallengeTxMessage.cpp
   ${PROJECT_SOURCE_DIR}/authenticator.cpp
@@ -65,7 +65,7 @@ set (stub_SRCS
   ${PROJECT_SOURCE_DIR}/transmitterTimeTxMessage.cpp
   ${PROJECT_SOURCE_DIR}/transmitterTimeRxMessage.cpp
   ${PROJECT_SOURCE_DIR}/uuidv4.cpp
-  ${PROJECT_SOURCE_DIR}/stub.cpp
+  ${PROJECT_SOURCE_DIR}/testStub.cpp
 )
 
 add_executable (transmitterWorker ${transmitterWorker_SRCS})
@@ -73,8 +73,8 @@ set_target_properties(transmitterWorker
     PROPERTIES
     CXX_STANDARD 11)
 
-add_executable (stub ${stub_SRCS})
-set_target_properties(stub
+add_executable (testStub ${testStub_SRCS})
+set_target_properties(testStub
     PROPERTIES
     CXX_STANDARD 11)
 
@@ -82,5 +82,5 @@ include_directories(${tinyb_PROJECT_DIR}/api)
 
 target_link_libraries (transmitterWorker tinyb cryptopp)
 
-target_link_libraries (stub tinyb cryptopp)
+target_link_libraries (testStub tinyb cryptopp)
 
