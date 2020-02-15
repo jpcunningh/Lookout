@@ -6,6 +6,8 @@
 #include <thread>
 #include <atomic>
 #include <csignal>
+#include <chrono>
+#include <ctime>
 
 #include "bluetoothServices.hpp"
 #include "transmitterWorker.hpp"
@@ -72,7 +74,9 @@ int main(int argc, char **argv)
         auto list = manager->get_devices();
 
         if (list.size() > 0) {
-            std::cerr << "Discovered devices: " << std::endl;
+            auto timenow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+            std::cerr << "Looking for: " << serial << "\n";
+            std::cerr << "Discovered devices at " << ctime(&timenow) << std::endl;
         }
 
         for (auto it = list.begin(); it != list.end(); ++it) {
