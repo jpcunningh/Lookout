@@ -16,6 +16,7 @@
 #include "keepAliveTxMessage.hpp"
 #include "transmitterTimeTxMessage.hpp"
 #include "transmitterTimeRxMessage.hpp"
+#include "hexdump.hpp"
 
 using namespace TransmitterWorker;
 
@@ -180,20 +181,26 @@ int main(int argc, char **argv)
 
         if (!auth.bonded) {
             std::cerr << "Requesting bond" << std::endl;
+
             KeepAliveTxMessage keepAliveMsg(25);
-            
+            std::cerr << "Sending KeepAliveTxMessage:\n";
+            hexdump(keepAliveMsg.getBuff().data(), keepAliveMsg.length());
             authCharacteristic->write_value(keepAliveMsg.getBuff());
 
             BondRequestTxMessage bondRequestMsg;
-
+            std::cerr << "Sending BondRequestTxMessage:\n";
+            hexdump(bondRequestMsg.getBuff().data(), bondRequestMsg.length());
             authCharacteristic->write_value(bondRequestMsg.getBuff());
         }
 
         TransmitterTimeTxMessage timeTxMsg;
-
+        std::cerr << "Sending TransmitterTimeTxMessage:\n";
+        hexdump(timeTxMsg.getBuff().data(), timeTxMsg.length());
         controlCharacteristic->write_value(timeTxMsg.getBuff());
 
         std::vector<unsigned char> response = controlCharacteristic->read_value();
+        std::cerr << "Received TransmitterTimeRxMessage:\n";
+        hexdump(response.data(), response.size());
         TransmitterTimeRxMessage timeRxMsg(response);
 
         std::cerr << "Transmitter time: " << timeRxMsg.currentTime;

@@ -6,6 +6,7 @@
 
 #include "transmitterWorker.hpp"
 #include "authenticator.hpp"
+#include "hexdump.hpp"
 
 #include "authRequestTxMessage.hpp"
 #include "authChallengeRxMessage.hpp"
@@ -28,15 +29,23 @@ int Authenticator::authenticate()
 {
     try {
         AuthRequestTxMessage authRequestTxMsg(altBtChannel);
+        std::cerr << "Sending AuthRequestTxMessage:\n";
+        hexdump(authRequestTxMsg.getBuff().data(), authRequestTxMsg.length());
         auth->write_value(authRequestTxMsg.getBuff());
 
         std::vector<unsigned char> response = auth->read_value();
+        std::cerr << "Received AuthChallengeRxMessage:\n";
+        hexdump(response.data(), response.size());
         AuthChallengeRxMessage authChallengeRxMsg(response, authRequestTxMsg.singleUseToken, serial);
 
         AuthChallengeTxMessage authChallengeTxMsg(authChallengeRxMsg.challenge, serial);
+        std::cerr << "Sending AuthChallengeTxMessage:\n";
+        hexdump(authChallengeTxMsg.getBuff().data(), authChallengeTxMsg.length());
         auth->write_value(authChallengeTxMsg.getBuff());
 
         response = auth->read_value();
+        std::cerr << "Received AuthStatusRxMessage:\n";
+        hexdump(response.data(), response.size());
         AuthStatusRxMessage authStatusRxMsg(response);
 
         authenticated = authStatusRxMsg.authenticated;
