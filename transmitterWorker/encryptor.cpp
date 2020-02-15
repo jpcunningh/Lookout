@@ -27,33 +27,25 @@ using namespace TransmitterWorker;
 
 Encryptor::Encryptor(std::vector<unsigned char> challenge, std::string serial)
 {
-    key = "00" + serial + "00" + serial;
+    std::string keyStr = "00" + serial + "00" + serial;
 
-    plain.assign(challenge.begin(), challenge.end());
-    plain.append(challenge.begin(), challenge.end());
+    strncpy((char *)key, keyStr.c_str(), sizeof(key));
+
+    strncpy((char *)plain, (char *)challenge.data(), 8);
+    strncpy((char *)plain + 8, (char *)challenge.data(), 8);
 }
 
 std::string Encryptor::calculateHash()
 {
-    try
-    {
-        byte keyByte[key.length()];
-        strncpy((char *)keyByte, key.c_str(), key.length());
 
-        ECB_Mode< AES >::Encryption e;
-        e.SetKey(keyByte, sizeof(keyByte));
+    ECB_Mode< AES >::Encryption e;
+    e.SetKey(key, sizeof(key));
 
-        StringSource(plain, true,
-            new StreamTransformationFilter(e,
-                new StringSink(cipher)
-            ) // StreamTransformationFilter
-        ); // StringSource
-    }
-    catch(const CryptoPP::Exception& e)
-    {
-        std::cerr << e.what() << std::endl;
-        exit(1);
-    }
+    StringSource(plain,  sizeof(plain), true,
+        new StreamTransformationFilter(e,
+            new StringSink(cipher)
+        ) // StreamTransformationFilter
+    ); // StringSource
 
     return cipher;
 }
