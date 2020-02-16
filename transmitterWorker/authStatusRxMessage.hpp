@@ -20,8 +20,8 @@ class AuthStatusRxMessage : public BluetoothMessage
     AuthStatusRxMessage(std::vector<unsigned char> &msg);
     unsigned char opcode();
 
-    bool authenticated;
-    bool bonded;
+    unsigned char authenticated;
+    unsigned char bonded;
 };
 
 class AuthStatusRxException : public std::exception

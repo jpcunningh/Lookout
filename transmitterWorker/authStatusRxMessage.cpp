@@ -28,8 +28,8 @@ AuthStatusRxMessage::AuthStatusRxMessage(std::vector<unsigned char> &msg)
         throw AuthStatusRxException("incorrect AuthStatusRxMessage opcode");
     }
 
-    authenticated = msg_->authenticated != 0;
-    bonded = msg_->bonded != 0;
+    authenticated = msg_->authenticated;
+    bonded = msg_->bonded;
 }
 
 unsigned char AuthStatusRxMessage::opcode() {

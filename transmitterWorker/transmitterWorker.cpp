@@ -183,8 +183,8 @@ int main(int argc, char **argv)
         Authenticator auth(authCharacteristic, serial, altBtChannel);
         auth.authenticate();
 
-        std::cerr << "Transmitter bonded: " << auth.bonded << "\n";
-        std::cerr << "Transmitter authenticated: " << auth.authenticated;
+        std::cerr << "Transmitter bonded: " << +auth.bonded << "\n";
+        std::cerr << "Transmitter authenticated: " << +auth.authenticated;
         std::cerr << std::endl;
 
         if (auth.bonded != 0x1) {
