@@ -89,7 +89,7 @@ int main(int argc, char **argv)
                 std::cerr << "Path = " << (*it)->get_object_path() << " ";
                 std::cerr << "Name = " << (*it)->get_name() << " ";
                 std::cerr << "Connected = " << (*it)->get_connected() << " ";
-                std::cerr << std::endl;
+                std::cerr << "\n" << std::endl;
 
                 transmitter = (*it).release();
             } else if (debug_scan) {
@@ -97,7 +97,7 @@ int main(int argc, char **argv)
                 std::cerr << "Path = " << (*it)->get_object_path() << " ";
                 std::cerr << "Name = " << (*it)->get_name() << " ";
                 std::cerr << "Connected = " << (*it)->get_connected() << " ";
-                std::cerr << std::endl;
+                std::cerr << "\n" << std::endl;
             }
 
         }
@@ -107,7 +107,6 @@ int main(int argc, char **argv)
             break;
         /* If not, wait and try again */
         std::this_thread::sleep_for(std::chrono::seconds(1));
-        std::cerr << std::endl;
     }
 
     /* Stop the discovery (the device was found or number of tries ran out */
