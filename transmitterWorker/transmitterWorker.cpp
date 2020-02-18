@@ -22,12 +22,28 @@ using namespace TransmitterWorker;
 
 std::atomic<bool> running(true);
 std::atomic<bool> debug_scan(false);
+std::condition_variable cv;
 
 void signal_handler(int signum)
 {
     if (signum == SIGINT) {
         running = false;
     }
+}
+
+static void wait_ctrl_c()
+{
+    std::mutex m;
+    std::unique_lock<std::mutex> lock(m);
+    std::signal(SIGINT, signal_handler);
+    cv.wait(lock);
+}
+
+void control_data_cb(__attribute__((unused)) BluetoothGattCharacteristic &c, std::vector<unsigned char> &data, __attribute__((unused)) void *userdata)
+{
+    std::cerr << "Received control data:" << std::endl;
+
+    hexdump(data.data(), data.size());
 }
 
 int main(int argc, char **argv)
@@ -199,7 +215,39 @@ int main(int argc, char **argv)
             std::cerr << "Sending BondRequestTxMessage:\n";
             hexdump(bondRequestMsg.getBuff().data(), bondRequestMsg.length());
             authCharacteristic->write_value(bondRequestMsg.getBuff());
+/*
+> ACL Data RX: Handle 64 flags 0x02 dlen 6                 #84 [hci0] 93.336170
+      SMP: Security Request (0x0b) len 1
+        Authentication requirement: Bonding, No MITM, Legacy, No Keypresses (0x01)
+< ACL Data TX: Handle 64 flags 0x00 dlen 11                #85 [hci0] 93.336305
+      SMP: Pairing Request (0x01) len 6
+        IO capability: NoInputNoOutput (0x03)
+        OOB data: Authentication data not present (0x00)
+        Authentication requirement: Bonding, No MITM, Legacy, No Keypresses (0x01)
+        Max encryption key size: 16
+        Initiator key distribution: <none> (0x00)
+        Responder key distribution: EncKey (0x01)
+< ACL Data TX: Handle 64 flags 0x00 dlen 11                #86 [hci0] 93.344880
+      ATT: Read By Type Request (0x08) len 6
+        Handle range: 0x001c-0x001e
+        Attribute type: Client Characteristic Configuration (0x2902)
+> ACL Data RX: Handle 64 flags 0x02 dlen 11                #87 [hci0] 93.351453
+      SMP: Pairing Response (0x02) len 6
+        IO capability: NoInputNoOutput (0x03)
+        OOB data: Authentication data not present (0x00)
+        Authentication requirement: Bonding, No MITM, Legacy, No Keypresses (0x01)
+        Max encryption key size: 16
+        Initiator key distribution: <none> (0x00)
+        Responder key distribution: EncKey (0x01)
+< ACL Data TX: Handle 64 flags 0x00 dlen 21                #88 [hci0] 93.351716
+      SMP: Pairing Confirm (0x03) len 16
+        Confim value: b8e4cbdfa43c1132b79a93d01f7b9bf1
+*/
         }
+
+        controlCharacteristic->enable_value_notifications(control_data_cb, nullptr);
+
+        wait_ctrl_c();
 
         TransmitterTimeTxMessage timeTxMsg;
         std::cerr << "Sending TransmitterTimeTxMessage:\n";
