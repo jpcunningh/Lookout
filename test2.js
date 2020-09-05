@@ -37,7 +37,7 @@ const test1 = async () => {
     log(`Found ${body.length} SGV entries since ${timeSince.toISOString()}\n%O`, body);
   }
 
-  timeSince = moment('2018-12-02T00:15:00-05:00');
+  timeSince = moment('2020-09-05T00:15:00-05:00');
 
   log(`Querying BG Checks since ${timeSince.format()}`);
   body = await xDripAPS.BGChecksSince(timeSince)
@@ -150,8 +150,8 @@ lookoutDebug += ',xDripAPS:*,transmitter';
 
 Debug.enable(lookoutDebug);
 
-// test1();
+test1();
 // test3();
-test4();
+// test4();
 // test5();
 // test6();
