@@ -1568,6 +1568,11 @@ module.exports = async (options, storage, client, fakeMeter) => {
       client.txId(value);
     },
 
+    setSensorAddr: (value) => {
+      // eslint-disable-next-line no-param-reassign
+      options.sensor_address = value;
+    },
+
     checkSensorSession: async (sensorInsert, sensorStop, bgChecks, sgv) => {
       checkSensorSession(sensorInsert, sensorStop, bgChecks, sgv);
     },

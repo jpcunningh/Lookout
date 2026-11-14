@@ -18,11 +18,15 @@ const argv = yargs
       required: true,
     });
   })
-  .command('id <id>', 'Set transmitter ID', (yargsp) => {
+  .command('id <id> [pinned_address]', 'Set transmitter ID', (yargsp) => {
     yargsp.positional('id', {
       describe: 'transmitter serial number',
       type: 'string',
       required: true,
+    });
+    yargsp.positional('pinned_address', {
+      describe: 'optional pinned BLE address (MAC)',
+      type: 'string',
     });
   })
   .command('meterid <meterid>', 'Set fake meter ID', (yargsp) => {
@@ -163,7 +167,7 @@ const processCommand = async (command) => {
   } else if (command === 'id') {
     if (validTxId(params.id)) {
       sendCmd = 'id';
-      sendArg = params.id;
+      sendArg = { id: params.id, pinned_address: params.pinned_address };
     } else {
       console.log(`ERROR: Invalid Transmitter Id: ${params.id}`);
     }

@@ -120,7 +120,8 @@ module.exports = (options) => {
       debug(`received transmitter id of ${value}`);
 
       if (transmitter) {
-        transmitter.setTxId(value);
+        transmitter.setSensorAddr(value.pinned_address);
+        transmitter.setTxId(value.id);
       }
     });
     socket.on('meterid', (value) => {
