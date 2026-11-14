@@ -20,17 +20,11 @@ const MAX_LSR_PAIRS = 10;
 const MAX_LSR_PAIRS_AGE = 6; // days
 
 const argv = yargs
-  .usage('$0 [--extend_sensor] [--expired_cal] [--port <port>] [--openaps <directory>] [--sim] [--fakemeter] [--offline_fakemeter] [--no_nightscout] [--include_mode] [--alternate] [--read_only] [--hci <interface>] [--openaps <directory>] [--no_nightscout] [--uploader_battery]')
+  .usage('$0 [--extend_sensor] [--expired_cal] [--port <port>] [--openaps <directory>] [--sim] [--fakemeter] [--offline_fakemeter] [--no_nightscout] [--include_mode] [--display_type watch(default)|phone|medical ] [--read_only] [--hci <interface>] [--openaps <directory>] [--no_nightscout] [--uploader_battery]')
   .option('extend_sensor', {
     boolean: true,
     describe: 'Enables extended sensor session mode',
     alias: 'e',
-    default: false,
-  })
-  .option('alternate', {
-    boolean: true,
-    describe: 'Enable Alternate Bluetooth Channel',
-    alias: 'c',
     default: false,
   })
   .option('display_type', {
@@ -171,7 +165,6 @@ const options = {
   max_lsr_pairs_age: params.max_lsr_pairs_age,
   include_mode: params.include_mode,
   hci: params.hci,
-  alternate_bt_channel: params.alternate,
   display_type: params.display_type,
   force_medical_slot: params.force_medical_slot,
   sensor_address: params.sensor_address,

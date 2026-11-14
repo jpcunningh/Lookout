@@ -9,20 +9,19 @@ const debug = Debug('transmitterWorker:debug');
 const Transmitter = require('xdrip-js');
 
 const id = process.argv[2];
-const altBtChannel = parseInt(process.argv[3], 10);
 
-let key = process.argv[4]?.trim() || null;
+let key = process.argv[3]?.trim() || null;
 if (key?.length === 0) {
   key = null;
 }
 
-const macAddress = process.argv[5]?.trim() || null;
+const macAddress = process.argv[4]?.trim() || null;
 
 // G7 sensor slot (1 medical, 2 phone, 3 watch), chosen by transmitterIO
-const displayType = parseInt(process.argv[6], 10) || null;
+const displayType = parseInt(process.argv[5], 10) || null;
 
 // Only connect to this sensor address, if given (never pair with other people's sensors nearby)
-const sensorAddress = process.argv[7]?.trim() || null;
+const sensorAddress = process.argv[6]?.trim() || null;
 
 /* eslint-disable-next-line no-unused-vars */
 const getMessages = () => new Promise((resolve, reject) => {
@@ -33,11 +32,9 @@ const getMessages = () => new Promise((resolve, reject) => {
   process.send({ msg: 'getMessages' });
 });
 
-const btChannel = altBtChannel ? 'alternate' : 'standard';
+log(`kicking off using ${displayType} Bluetooth channel`);
 
-log(`kicking off using ${btChannel} Bluetooth channel`);
-
-const transmitter = new Transmitter(id, getMessages, altBtChannel, key, macAddress, {
+const transmitter = new Transmitter(id, getMessages, key, macAddress, {
   displayType,
   sensorAddress,
   // no saved key => next connection is a first G7 pairing; pre-warm the crypto

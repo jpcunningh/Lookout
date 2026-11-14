@@ -1,4 +1,4 @@
-# Lookout (Dexcom G7 collector via xdrip-js) -> Nightscout.
+# Lookout (Dexcom collector via xdrip-js) -> Nightscout.
 # Installed by deploy/install.sh, which fills in @USER@, @DIR@ and @NODE_BIN@.
 # NOTE: Lookout's web UI listens on :3000 with NO authentication; keep the rig
 # on a trusted network.

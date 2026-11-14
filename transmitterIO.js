@@ -1169,7 +1169,6 @@ module.exports = async (options, storage, client, fakeMeter) => {
     } else {
       // own Node flags: the launcher's tiny heap makes the G7 crypto ~2x slower
       const workerOptions = { execArgv: WORKER_EXEC_ARGV };
-      const btChannel = options.alternate_bt_channel ? '1' : '0';
       const key = sensorKey?.key || '';
       const macAddress = sensorKey?.address || '';
 
@@ -1192,7 +1191,7 @@ module.exports = async (options, storage, client, fakeMeter) => {
 
       worker = cp.fork(
         `${__dirname}/transmitterWorker`,
-        [id, btChannel, key, macAddress, displayType ? String(displayType) : '',
+        [id, key, macAddress, displayType ? String(displayType) : '',
           options.sensor_address || ''],
         workerOptions,
       );

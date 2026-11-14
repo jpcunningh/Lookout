@@ -292,13 +292,19 @@ Enter a BG Check into Nightscout to calibrate the transmitter and the expired ca
 This feature requires Nightscout 0.10.3 or later. Lookout provides devicestatus records to Nightscout which will display the CGM status in a CGM pill if the Nightscout xdrip-js plugin is enabled. See the Nightscout README for details on enabling the plugin and settings.
 
 ## Making it permanent
-So far in the above you've only run Lookout from the command line - the next time you close your terminal, or reboot your rig, Lookout will only run if you add this to your crontab:
+So far in the above you've only run Lookout from the command line. There are two options for configuring your rig so Lookout runs automatically when the rig boots, cron or systemd. Systemd setup also updates the bluetoothd configuration to disable the gap plugin which avoids some timing issues.
+
+### Cron
 ```
 <type the command `crontab -e` and add this line:>
 @reboot Lookout >> /var/log/openaps/lookout.log 2>&1
 <save and exit your editor>
 <reboot your rig with the command `reboot`>
 ```
+
+### Systemd
+
+See README in deploy folder. This also affects how to watch the debug log as explained in the README.
 
 ## Debugging
 To look at the Lookout log, for debug purposes, type `cat /var/log/openaps/lookout.log` or `tail -n 100 -F /var/log/openaps/lookout.log`.
