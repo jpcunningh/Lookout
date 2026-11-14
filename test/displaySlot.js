@@ -25,19 +25,17 @@ describe('displaySlot.resolveDisplayType', () => {
       .should.equal(1);
   });
 
-  it('treats --alternate on a G7 as the medical slot, so refuses it unless forced', () => {
-    (() => resolveDisplayType({ txId: '1234', alternate: true })).should.throw(/medical slot/);
-    resolveDisplayType({ txId: '1234', alternate: true, forceMedical: true }).should.equal(1);
-  });
-
   it('rejects unknown display types', () => {
     (() => resolveDisplayType({ txId: '1234', displayType: 'tablet' })).should.throw(/display type/);
     (() => resolveDisplayType({ txId: '1234', displayType: 4 })).should.throw(/display type/);
   });
 
-  it('does not apply to G5/G6', () => {
-    should(resolveDisplayType({ txId: '8G1234', displayType: 'watch' })).equal(null);
-    should(resolveDisplayType({ txId: '8G1234', alternate: true })).equal(null);
+  it('medical refusal does not apply to G5/G6', () => {
+    should(resolveDisplayType({ txId: '8G1234', displayType: 'medical' })).equal(1);
+  });
+
+  it('rejects unsupported watch slot for G5/G6', () => {
+    (() => resolveDisplayType({ txId: '8G1234', displayType: 'watch' })).should.throw(/display type/);
   });
 });
 
@@ -61,7 +59,7 @@ describe('displaySlot.slotFailureHint', () => {
 
 describe('displaySlot with no transmitter id yet', () => {
   it('neither throws nor picks a slot', () => {
-    should(resolveDisplayType({ txId: undefined })).equal(null);
+    should(resolveDisplayType({ txId: undefined })).equal(2);
     should(slotFailureHint({ txId: undefined, displayType: 3, failedReads: 5 })).equal(null);
   });
 });

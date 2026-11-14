@@ -295,19 +295,57 @@ This feature requires Nightscout 0.10.3 or later. Lookout provides devicestatus 
 So far in the above you've only run Lookout from the command line. There are two options for configuring your rig so Lookout runs automatically when the rig boots, cron or systemd. Systemd setup also updates the bluetoothd configuration to disable the gap plugin which avoids some timing issues.
 
 ### Cron
+
+Set the command line arguments for Lookout to what you would like. The command line options are described below.
+
 ```
 <type the command `crontab -e` and add this line:>
-@reboot Lookout >> /var/log/openaps/lookout.log 2>&1
+NIGHTSCOUT_HOST=https://YOUR-NIGHTSCOUT.example.com
+API_SECRET=your-nightscout-api-secret
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/libexec/bluetooth:/usr/local/go/bin:/root/go/bin:/root/go/bin/
+
+* * * * * /usr/bin/flock -n /tmp/lookout.lock sh -c 'pgrep -f Lookout | grep -v $$ | xargs -r kill 2>/dev/null || true; exec Lookout' >> /var/log/openaps/lookout.log 2>&1
 <save and exit your editor>
 <reboot your rig with the command `reboot`>
 ```
 
+The systemd bluetoothd service configuration needs to be updated to resolve a timing issue with the G7. To update the bluetoothd confguration execute the commands below.
+
+```bash
+cd ~/Lookout
+deploy/install.sh --bluetooth-only
+```
+
 ### Systemd
 
-See README in deploy folder. This also affects how to watch the debug log as explained in the README.
+Lookout can be run as a systemd service.
 
-## Debugging
-To look at the Lookout log, for debug purposes, type `cat /var/log/openaps/lookout.log` or `tail -n 100 -F /var/log/openaps/lookout.log`.
+The deploy script to update the bluetoothd service and install the Lookout is in the deploy folder. See README in deploy folder for more details.
+
+To deploy both the blutoothd update and the Lookout daemon execute the following commands.
+
+Set the command line arguments for Lookout in the LOOKOUT_ARGS line in /etc/lookout.env. The command line options are described below.
+
+```bash
+cd ~/Lookout
+deploy/install.sh
+sudoedit /etc/lookout.env
+systemctl enable --now lookout
+```
+
+## Debugging Having Run Lookout with Cron
+
+To look at the Lookout log, for debug purposes:
+```bash
+tail -n 100 -F /var/log/openaps/lookout.log
+```
+
+## Debugging Having Run Lookout as systemd Service
+
+To look at the Lookout logging, for debug purposes:
+```bash
+journalctl -u lookout -f | grep -E 'got glucose|uploaded SGV|0a0300|Error'
+```
 
 ### Binding Errors
 If your lookout.log file contains messages similar to `Error: /root/Lookout/node_modules/bluetooth-hci-socket/build/Release/binding.node: undefined symbol: _ZN2v816FunctionTemplate3NewEPNS_7IsolateEPFvRKNS_20FunctionCallbackInfoINS_5ValueEEEENS_5LocalIS4_EENSA_INS_9SignatureEEEi` run the following command: `cd ~/Lookout; npm rebuild`

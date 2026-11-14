@@ -1177,7 +1177,6 @@ module.exports = async (options, storage, client, fakeMeter) => {
         displayType = displaySlot.resolveDisplayType({
           txId: id,
           displayType: options.display_type,
-          alternate: options.alternate_bt_channel,
           forceMedical: options.force_medical_slot,
         });
       } catch (err) {

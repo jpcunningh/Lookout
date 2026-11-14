@@ -5,11 +5,12 @@
 //   2 phone    - the Dexcom G7 app
 //   3 watch    - Dexcom direct-to-watch
 // Claiming the medical slot can disconnect a pump's CGM link, so it is
-// refused unless explicitly forced. On G6, --alternate meant "receiver
-// channel"; on G7 it means the medical slot.
+// refused unless explicitly forced. On G6, medical slot was for the receiver;
+// on G7 it means the medical slot.
 
 const NAMES = { medical: 1, phone: 2, watch: 3 };
 const DEFAULT_G7 = NAMES.watch;
+const DEFAULT_G6 = NAMES.phone;
 
 // txId is unset until `lookout id` has been run on a fresh install.
 const isG7 = (txId) => typeof txId === 'string' && txId.length > 0 && txId.length < 6;
@@ -28,23 +29,26 @@ const parse = (displayType) => {
 // Returns the slot number for a G7, or null for G5/G6 (not applicable).
 // Throws if the medical slot would be used without forceMedical.
 const resolveDisplayType = ({
-  txId, displayType = null, alternate = false, forceMedical = false,
+  txId, displayType = null, forceMedical = false,
 }) => {
+  let slot = DEFAULT_G7;
+
   if (!isG7(txId)) {
-    return null;
+    slot = DEFAULT_G6;
   }
 
-  let slot = DEFAULT_G7;
   if (displayType !== null && displayType !== undefined && displayType !== '') {
     slot = parse(displayType);
-  } else if (alternate) {
-    slot = NAMES.medical;
   }
 
-  if (slot === NAMES.medical && !forceMedical) {
+  if (isG7(txId) && (slot === NAMES.medical && !forceMedical)) {
     throw new Error('refusing to use the G7 medical slot (receiver/pump such as Omnipod 5): '
       + 'it can disconnect the pump\'s CGM link. Use --display_type watch or phone, '
       + 'or add --force_medical_slot if no pump or receiver uses this sensor.');
+  }
+
+  if (!isG7(txId) && (slot === NAMES.watch)) {
+    throw new Error('refusing to use the unsupported watch display type on G5/G6');
   }
 
   return slot;
